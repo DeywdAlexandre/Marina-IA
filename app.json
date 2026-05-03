@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Marina IA",
-    "slug": "marina-ia-app",
+    "slug": "maria-ia",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=512&h=512&auto=format&fit=crop",
@@ -16,14 +16,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.deywd.mariai"
+      "bundleIdentifier": "com.deywd.marinai"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=512&h=512&auto=format&fit=crop",
         "backgroundColor": "#1e1f20"
       },
-      "package": "com.deywd.mariai"
+      "package": "com.deywd.marinai"
     },
     "web": {
       "favicon": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=192&h=192&auto=format&fit=crop"

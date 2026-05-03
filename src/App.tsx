@@ -69,9 +69,9 @@ export default function App() {
     return [...DEFAULT_MODELS, ...custom];
   });
   const [defaultModelId, setDefaultModelId] = useState<string>(() => {
-    return localStorage.getItem('maria_default_model') || DEFAULT_MODELS[0].id;
+    return localStorage.getItem('marina_default_model') || DEFAULT_MODELS[0].id;
   });
-  const [activeModel, setActiveModel] = useState(localStorage.getItem('maria_default_model') || availableModels[0]?.id || DEFAULT_MODELS[0].id);
+  const [activeModel, setActiveModel] = useState(localStorage.getItem('marina_default_model') || availableModels[0]?.id || DEFAULT_MODELS[0].id);
   const [input, setInput] = useState('');
   const [sessions, setSessions] = useState<ChatSession[]>(storageService.loadSessions());
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -117,13 +117,13 @@ export default function App() {
   );
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [notifyOnComplete, setNotifyOnComplete] = useState(false);
-  const [theme, setTheme] = useState(localStorage.getItem('maria_theme') || 'default');
+  const [theme, setTheme] = useState(localStorage.getItem('marina_theme') || 'default');
   const [isComparisonMode, setIsComparisonMode] = useState(false);
   const [comparisonModelIds, setComparisonModelIds] = useState<string[]>([]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('maria_theme', theme);
+    localStorage.setItem('marina_theme', theme);
   }, [theme]);
 
   const toggleComparisonModel = (modelId: string) => {
@@ -312,7 +312,7 @@ export default function App() {
   const handleExportTXT = () => {
     if (!currentSession) return;
     const content = currentSession.messages
-      .map(m => `${m.role === 'user' ? 'Você' : 'Maria'} (${new Date(m.timestamp).toLocaleString()}):\n${m.content}\n\n`)
+      .map(m => `${m.role === 'user' ? 'Você' : 'Marina'} (${new Date(m.timestamp).toLocaleString()}):\n${m.content}\n\n`)
       .join('---\n\n');
     
     const blob = new Blob([content], { type: 'text/plain' });
@@ -411,7 +411,7 @@ export default function App() {
   const handleSetDefaultModel = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setDefaultModelId(id);
-    localStorage.setItem('maria_default_model', id);
+    localStorage.setItem('marina_default_model', id);
   };
 
   useEffect(() => {
@@ -831,7 +831,7 @@ export default function App() {
               </button>
               <div className="px-4 py-2 flex items-center gap-2 text-xs text-[#9aa0a6]">
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span>Maria IA: Ativa</span>
+                <span>Marina IA: Ativa</span>
               </div>
             </div>
           </motion.aside>
@@ -970,7 +970,7 @@ export default function App() {
               <Globe size={20} className={isSearchEnabled ? 'animate-pulse' : ''} />
             </button>
             <div className="w-8 h-8 rounded-full overflow-hidden border border-blue-500/30">
-               <img src={MARIA_AVATAR} alt="Maria" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+               <img src={MARINA_AVATAR} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>
           </div>
         </header>
@@ -988,7 +988,7 @@ export default function App() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="w-24 h-24 rounded-full overflow-hidden mb-6 ring-4 ring-[#8ab4f8]/20 shadow-2xl"
               >
-                <img src={MARIA_AVATAR} alt="Maria" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <img src={MARINA_AVATAR} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </motion.div>
               <motion.h1 
                 initial={{ opacity: 0, y: 20 }}
@@ -1001,7 +1001,7 @@ export default function App() {
                 {[
                   "Explique como funciona o RAG no celular",
                   "Crie um itinerário de 3 dias para Tokyo",
-                  "Como integrar TTS na Maria IA?",
+                  "Como integrar TTS na Marina IA?",
                   "Me ajude a planejar meu app"
                 ].map((prompt, i) => (
                   <button 
@@ -1087,7 +1087,7 @@ export default function App() {
                     <div key={m.id} className={`flex gap-6 ${m.role === 'user' ? 'justify-end' : ''}`}>
                       {m.role === 'assistant' && (
                         <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 mt-1 ring-2 ring-[#444746]/50 shadow-lg">
-                          <img src={MARIA_AVATAR} alt="Maria" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          <img src={MARINA_AVATAR} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         </div>
                       )}
                       <div className={`max-w-[85%] ${m.role === 'user' ? 'bg-[#333537] px-5 py-3 rounded-[2rem]' : ''}`}>
@@ -1219,7 +1219,7 @@ export default function App() {
                         <div className="flex justify-between items-center mb-8">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full overflow-hidden border border-[#444746] shadow-lg">
-                                    <img src={MARIA_AVATAR} alt="Maria" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    <img src={MARINA_AVATAR} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                 </div>
                                 <h2 className="text-2xl font-medium">Configurações</h2>
                             </div>
@@ -1300,7 +1300,7 @@ export default function App() {
                                                 <History size={18} className={notifyOnComplete ? "text-primary" : "text-[#9aa0a6]"} />
                                                 <div>
                                                     <p className="text-sm font-medium">Alertar Respostas</p>
-                                                    <p className="text-[0.65rem] text-[#9aa0a6]">Notificar quando a Maria terminar uma resposta longa</p>
+                                                    <p className="text-[0.65rem] text-[#9aa0a6]">Notificar quando a Marina terminar uma resposta longa</p>
                                                 </div>
                                             </div>
                                             <button 
@@ -1317,7 +1317,7 @@ export default function App() {
                                                 value={selectedVoiceURI} 
                                                 onChange={(e) => {
                                                     setSelectedVoiceURI(e.target.value);
-                                                    localStorage.setItem('maria_voice_uri', e.target.value);
+                                                    localStorage.setItem('marina_voice_uri', e.target.value);
                                                 }}
                                                 className="w-full bg-background border border-border-dim rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-colors"
                                             >
