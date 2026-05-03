@@ -3,24 +3,21 @@
     "name": "Marina IA",
     "slug": "maria-ia",
     "version": "1.0.0",
+    "platforms": ["android"],
     "orientation": "portrait",
-    "icon": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=512&h=512&auto=format&fit=crop",
+    "icon": "./public/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
-      "image": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=512&h=512&auto=format&fit=crop",
+      "image": "./public/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#1e1f20"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.deywd.mariai"
-    },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=512&h=512&auto=format&fit=crop",
+        "foregroundImage": "./public/icon.png",
         "backgroundColor": "#1e1f20"
       },
       "package": "com.deywd.mariai"
