@@ -107,6 +107,7 @@ export default function App() {
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState('');
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const MARINA_AVATAR = "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=200&h=200&auto=format&fit=crop";
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>(() => {
@@ -457,15 +458,21 @@ export default function App() {
   };
 
   const handleCreateFolder = () => {
-    const name = prompt("Nome da pasta:");
-    if (name) {
+    setIsCreatingFolder(true);
+    setNewFolderName('');
+  };
+
+  const confirmCreateFolder = () => {
+    if (newFolderName.trim()) {
       const newFolder: Folder = {
         id: Date.now().toString(),
-        name,
+        name: newFolderName.trim(),
         isExpanded: true
       };
       setFolders([...folders, newFolder]);
     }
+    setIsCreatingFolder(false);
+    setNewFolderName('');
   };
 
   const handleMoveToFolder = (sessionId: string, folderId: string | undefined) => {
@@ -680,6 +687,24 @@ export default function App() {
                         <FolderPlus size={16} />
                       </button>
                     </div>
+
+                    {isCreatingFolder && (
+                      <div className="px-2 mb-3">
+                        <input
+                          autoFocus
+                          type="text"
+                          value={newFolderName}
+                          onChange={e => setNewFolderName(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') confirmCreateFolder();
+                            if (e.key === 'Escape') setIsCreatingFolder(false);
+                          }}
+                          onBlur={() => confirmCreateFolder()}
+                          placeholder="Nome da pasta..."
+                          className="w-full bg-[#131314] text-sm text-white px-3 py-2 rounded-lg border border-[#444746] focus:border-primary outline-none"
+                        />
+                      </div>
+                    )}
                     
                     <div className="space-y-3">
                       {folders.map(folder => (
