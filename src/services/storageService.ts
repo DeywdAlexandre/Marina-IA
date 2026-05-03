@@ -26,6 +26,15 @@ export const storageService = {
     return data ? JSON.parse(data) : [];
   },
 
+  savePersonas(personas: any[]) {
+    localStorage.setItem('chat_personas', JSON.stringify(personas));
+  },
+
+  loadPersonas() {
+    const data = localStorage.getItem('chat_personas');
+    return data ? JSON.parse(data) : [];
+  },
+
   saveCustomModels(models: any[]) {
     localStorage.setItem('custom_models', JSON.stringify(models));
   },

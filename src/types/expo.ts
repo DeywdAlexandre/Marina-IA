@@ -21,6 +21,8 @@ export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: number;
+  image?: string;
+  modelName?: string;
 }
 
 export interface ChatSession {
@@ -35,6 +37,13 @@ export interface Folder {
   id: string;
   name: string;
   isExpanded?: boolean;
+}
+
+export interface Persona {
+  id: string;
+  name: string;
+  systemPrompt: string;
+  icon?: string;
 }
 
 export interface OpenRouterModel {

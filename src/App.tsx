@@ -30,7 +30,12 @@ import {
   FolderPlus,
   ChevronRight,
   MoreVertical,
-  Palette
+  Palette,
+  Columns,
+  Layers,
+  Zap,
+  X,
+  Image
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
@@ -78,15 +83,34 @@ export default function App() {
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isSearchEnabled, setIsSearchEnabled] = useState(false);
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Imagem muito grande! Máximo 2MB para preservar armazenamento local.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAttachedImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
   const [isSpeaking, setIsSpeaking] = useState<string | null>(null);
   const [chatSearchTerm, setChatSearchTerm] = useState('');
   const [folders, setFolders] = useState<Folder[]>(storageService.loadFolders());
+  const [personas, setPersonas] = useState<Persona[]>(storageService.loadPersonas());
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState('');
-  const MARIA_AVATAR = "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=200&h=200&auto=format&fit=crop";
+  const MARINA_AVATAR = "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=200&h=200&auto=format&fit=crop";
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>(() => {
-    return localStorage.getItem('maria_voice_uri') || '';
+    return localStorage.getItem('marina_voice_uri') || '';
   });
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
@@ -94,11 +118,21 @@ export default function App() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [notifyOnComplete, setNotifyOnComplete] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('maria_theme') || 'default');
+  const [isComparisonMode, setIsComparisonMode] = useState(false);
+  const [comparisonModelIds, setComparisonModelIds] = useState<string[]>([]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('maria_theme', theme);
   }, [theme]);
+
+  const toggleComparisonModel = (modelId: string) => {
+    setComparisonModelIds(prev => 
+      prev.includes(modelId) 
+        ? prev.filter(id => id !== modelId) 
+        : prev.length < 3 ? [...prev, modelId] : prev
+    );
+  };
 
   // New model management state
   const [newModelId, setNewModelId] = useState('');
@@ -121,6 +155,10 @@ export default function App() {
   useEffect(() => {
     storageService.saveFolders(folders);
   }, [folders]);
+
+  useEffect(() => {
+    storageService.savePersonas(personas);
+  }, [personas]);
 
   useEffect(() => {
     const customOnly = availableModels.filter(m => !DEFAULT_MODELS.some(d => d.id === m.id));
@@ -264,7 +302,7 @@ export default function App() {
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Maria_Chat_${currentSession.title.replace(/\s+/g, '_')}.pdf`);
+      pdf.save(`Marina_Chat_${currentSession.title.replace(/\s+/g, '_')}.pdf`);
     } catch (err) {
       console.error("Export PDF error:", err);
       alert("Erro ao exportar PDF.");
@@ -281,7 +319,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Maria_Chat_${currentSession.title.replace(/\s+/g, '_')}.txt`;
+    link.download = `Marina_Chat_${currentSession.title.replace(/\s+/g, '_')}.txt`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -363,9 +401,9 @@ export default function App() {
     setNotificationPermission(permission);
 
     if (permission === 'granted') {
-      new Notification("Maria IA", {
+      new Notification("Marina IA", {
         body: "Notificações ativadas com sucesso!",
-        icon: MARIA_AVATAR
+        icon: MARINA_AVATAR
       });
     }
   };
@@ -434,6 +472,62 @@ export default function App() {
     setSessions(sessions.map(s => s.id === sessionId ? { ...s, folderId } : s));
   };
 
+  const handleExportBackup = () => {
+    const data = {
+      sessions,
+      folders,
+      personas,
+      settings: {
+        theme,
+        apiKey,
+        activeModel,
+        soundEnabled,
+        notifyOnComplete
+      }
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `MarinaIA_Backup_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+  };
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        if (confirm("Isso irá substituir seus dados atuais. Continuar?")) {
+          if (data.sessions) setSessions(data.sessions);
+          if (data.folders) setFolders(data.folders);
+          if (data.personas) setPersonas(data.personas);
+          if (data.settings?.theme) setTheme(data.settings.theme);
+          if (data.settings?.apiKey) setApiKey(data.settings.apiKey);
+          alert("Backup restaurado com sucesso!");
+        }
+      } catch (err) {
+        alert("Erro ao ler arquivo de backup.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleAddPersona = () => {
+    const name = prompt("Nome da Persona (ex: Professor de Inglês):");
+    if (!name) return;
+    const promptText = prompt("Instrução do Sistema (como ela deve agir?):");
+    if (!promptText) return;
+    const newPersona: Persona = {
+      id: Date.now().toString(),
+      name,
+      systemPrompt: promptText
+    };
+    setPersonas([...personas, newPersona]);
+  };
+
   const toggleFolder = (folderId: string) => {
     setFolders(folders.map(f => f.id === folderId ? { ...f, isExpanded: !f.isExpanded } : f));
   };
@@ -466,52 +560,60 @@ export default function App() {
       id: Date.now().toString(),
       role: 'user',
       content: input,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      image: attachedImage || undefined
     };
 
     setSessions(prev => prev.map(s => 
       s.id === sessionId ? { ...s, messages: [...s.messages, userMessage] } : s
     ));
     setInput('');
+    setAttachedImage(null);
     setIsStreaming(true);
 
-    const assistantMessageId = (Date.now() + 1).toString();
-    const assistantMessage: Message = {
-      id: assistantMessageId,
-      role: 'assistant',
-      content: '',
-      timestamp: Date.now()
-    };
+    const modelsToProcess = isComparisonMode && comparisonModelIds.length > 0 
+      ? comparisonModelIds 
+      : [isSearchEnabled ? 'perplexity/llama-3.1-sonar-small-128k-online' : activeModel];
 
-    setSessions(prev => prev.map(s => 
-      s.id === sessionId ? { ...s, messages: [...s.messages, assistantMessage] } : s
-    ));
+    const currentSessionObj = sessions.find(s => s.id === sessionId);
+    const selectedPersona = personas.find(p => p.id === selectedPersonaId);
+    const systemPrompt = selectedPersona ? { role: 'system', content: selectedPersona.systemPrompt } : null;
+
+    const baseHistory = [
+      ...(systemPrompt ? [systemPrompt] : []),
+      ...(currentSessionObj?.messages || []).map(m => ({ role: m.role, content: m.content })),
+      { role: userMessage.role, content: userMessage.content }
+    ];
 
     try {
-      // Usamos o histórico da sessão atual SE ela já existir, senão começamos vazia
-      const currentSessionObj = sessions.find(s => s.id === sessionId);
-      
-      // Se a pesquisa estiver ativada, usamos o modelo de busca
-      const searchModelId = 'perplexity/llama-3.1-sonar-small-128k-online';
-      const modelToUse = isSearchEnabled ? searchModelId : activeModel;
+      await Promise.all(modelsToProcess.map(async (modelId) => {
+        const modelName = availableModels.find(m => m.id === modelId)?.name || modelId.split('/').pop() || 'IA';
+        const assistantMessageId = (Date.now() + Math.random()).toString();
+        const assistantMessage: Message = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: '',
+          timestamp: Date.now(),
+          modelName: isComparisonMode ? modelName : undefined
+        };
 
-      const history = [
-        ...(currentSessionObj?.messages || []).map(m => ({ role: m.role, content: m.content })),
-        { role: userMessage.role, content: userMessage.content }
-      ];
-
-      let accumulated = "";
-      await chatWithOpenRouter(apiKey, modelToUse, history, (chunk) => {
-        accumulated += chunk;
         setSessions(prev => prev.map(s => 
-          s.id === sessionId ? {
-            ...s,
-            messages: s.messages.map(m => 
-              m.id === assistantMessageId ? { ...m, content: accumulated } : m
-            )
-          } : s
+          s.id === sessionId ? { ...s, messages: [...s.messages, assistantMessage] } : s
         ));
-      });
+
+        let accumulated = "";
+        await chatWithOpenRouter(apiKey, modelId, baseHistory, (chunk) => {
+          accumulated += chunk;
+          setSessions(prev => prev.map(s => 
+            s.id === sessionId ? {
+              ...s,
+              messages: s.messages.map(m => 
+                m.id === assistantMessageId ? { ...m, content: accumulated } : m
+              )
+            } : s
+          ));
+        });
+      }));
     } catch (error) {
       console.error(error);
     } finally {
@@ -519,9 +621,9 @@ export default function App() {
 
       // Notify user if enabled and tab is hidden
       if (notifyOnComplete && Notification.permission === 'granted' && document.hidden) {
-        new Notification("Maria IA", {
+        new Notification("Marina IA", {
           body: "Terminei de processar sua resposta!",
-          icon: MARIA_AVATAR,
+          icon: MARINA_AVATAR,
           tag: 'response-ready'
         });
       }
@@ -552,9 +654,9 @@ export default function App() {
               <div className="p-6 border-b border-[#444746] flex items-center justify-between">
                 <div className="flex items-center gap-3 text-[#e3e3e3]">
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-primary/30 shadow-md">
-                    <img src={MARIA_AVATAR} alt="Maria" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img src={MARINA_AVATAR} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   </div>
-                  <h1 className="font-bold text-xl tracking-tighter">Maria</h1>
+                  <h1 className="font-bold text-xl tracking-tighter">Marina</h1>
                 </div>
                 <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 hover:bg-[#333537] rounded-full">
                   <Menu size={20} />
@@ -689,6 +791,33 @@ export default function App() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Personas */}
+                  <div className="pt-4 border-t border-border-dim/30">
+                    <div className="flex items-center justify-between px-2 mb-3">
+                      <p className="text-[0.65rem] font-bold text-[#9aa0a6] uppercase tracking-[0.2em]">Personas</p>
+                      <button onClick={handleAddPersona} className="p-1 hover:bg-[#333537] rounded-lg transition-colors text-[#9aa0a6] hover:text-white" title="Nova Persona">
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                       {personas.map(p => (
+                         <button 
+                          key={p.id}
+                          onClick={() => setSelectedPersonaId(selectedPersonaId === p.id ? null : p.id)}
+                          className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
+                            selectedPersonaId === p.id ? 'border-primary bg-primary/20 shadow-sm' : 'border-border-dim hover:bg-primary/5'
+                          }`}
+                          title={p.systemPrompt}
+                         >
+                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
+                              {p.name.charAt(0)}
+                           </div>
+                           <span className="text-[10px] font-medium truncate w-full text-center">{p.name}</span>
+                         </button>
+                       ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -734,6 +863,14 @@ export default function App() {
                     className="absolute top-full left-0 mt-2 w-72 bg-surface border border-border-dim rounded-xl shadow-2xl z-50 overflow-hidden py-2"
                     onClick={(e) => e.stopPropagation()}
                   >
+                    <div className="px-3 py-2 border-b border-[#444746] mb-1 flex items-center justify-between">
+                      <p className="text-[0.6rem] font-bold text-[#9aa0a6] uppercase tracking-widest">
+                        {isComparisonMode ? `Comparação (${comparisonModelIds.length}/3)` : 'Selecionar Modelo'}
+                      </p>
+                      {isComparisonMode && (
+                        <button onClick={() => setComparisonModelIds([])} className="text-[10px] text-red-400 hover:underline">Limpar</button>
+                      )}
+                    </div>
                     <div className="px-3 py-2 border-b border-[#444746] mb-1">
                       <input 
                         autoFocus
@@ -741,7 +878,7 @@ export default function App() {
                         placeholder="Buscar modelo..."
                         value={modelSearchQuery}
                         onChange={(e) => setModelSearchQuery(e.target.value)}
-                        className="w-full bg-[#131314] border border-[#444746] rounded-lg px-3 py-1.5 text-xs outline-none focus:border-[#8ab4f8] transition-colors"
+                        className="w-full bg-[#131314] border border-[#444746] rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary transition-colors"
                       />
                     </div>
                     <div className="max-h-64 overflow-y-auto">
@@ -753,18 +890,35 @@ export default function App() {
                         .map(m => (
                           <div 
                             key={m.id}
-                            className={`w-full flex items-center justify-between group/model ${activeModel === m.id ? 'bg-[#004a77]' : 'hover:bg-[#333537]'} transition-colors px-1`}
+                            className={`w-full flex items-center justify-between group/model ${
+                              (isComparisonMode ? comparisonModelIds.includes(m.id) : activeModel === m.id) 
+                                ? 'bg-primary/20' 
+                                : 'hover:bg-[#333537]'
+                            } transition-colors px-1`}
                           >
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setActiveModel(m.id);
-                                setShowModelList(false);
+                                if (isComparisonMode) {
+                                  toggleComparisonModel(m.id);
+                                } else {
+                                  setActiveModel(m.id);
+                                  setShowModelList(false);
+                                }
                                 setModelSearchQuery('');
                               }}
-                              className={`flex-1 text-left px-3 py-3 text-sm flex items-center justify-between min-w-0 ${activeModel === m.id ? 'text-[#c2e7ff]' : ''}`}
+                              className={`flex-1 text-left px-3 py-3 text-sm flex items-center justify-between min-w-0 ${
+                                (isComparisonMode ? comparisonModelIds.includes(m.id) : activeModel === m.id) 
+                                  ? 'text-primary' 
+                                  : ''
+                              }`}
                             >
-                              <span className="truncate">{m.name}</span>
+                              <div className="flex items-center gap-2 truncate">
+                                {isComparisonMode && (
+                                  <div className={`w-3 h-3 rounded-full border border-primary/50 flex-shrink-0 ${comparisonModelIds.includes(m.id) ? 'bg-primary' : ''}`} />
+                                )}
+                                <span className="truncate">{m.name}</span>
+                              </div>
                               {(m as any).isFree && (
                                   <span className="bg-green-500/20 text-green-400 text-[0.6rem] px-1.5 py-0.5 rounded font-bold uppercase ml-2 flex-shrink-0">Grátis</span>
                               )}
@@ -797,6 +951,15 @@ export default function App() {
                 />
               </div>
             )}
+            <button 
+              onClick={() => setIsComparisonMode(!isComparisonMode)}
+              className={`p-2 rounded-full transition-all ${
+                isComparisonMode ? 'bg-purple-500/20 text-purple-400' : 'text-[#9aa0a6] hover:bg-[#333537]'
+              }`}
+              title={isComparisonMode ? "Desativar Comparação" : "Ativar Comparação (Mult-Model)"}
+            >
+              <Columns size={20} />
+            </button>
             <button 
               onClick={() => setIsSearchEnabled(!isSearchEnabled)}
               className={`p-2 rounded-full transition-all ${
@@ -832,7 +995,7 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 className="text-5xl font-medium mb-8 bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent tracking-tight font-sans"
               >
-                Olá, eu sou a Maria.
+                Olá, eu sou a Marina.
               </motion.h1>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 {[
@@ -871,49 +1034,110 @@ export default function App() {
               </div>
               {currentSession.messages
                 .filter(m => chatSearchTerm === '' || m.content.toLowerCase().includes(chatSearchTerm.toLowerCase()))
-                .map((m) => (
-                <div key={m.id} className={`flex gap-6 ${m.role === 'user' ? 'justify-end' : ''}`}>
-                  {m.role === 'assistant' && (
-                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 mt-1 ring-2 ring-[#444746]/50 shadow-lg">
-                      <img src={MARIA_AVATAR} alt="Maria" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    </div>
-                  )}
-                  <div className={`max-w-[85%] ${m.role === 'user' ? 'bg-[#333537] px-5 py-3 rounded-[2rem]' : ''}`}>
-                    <div className="text-[1.05rem] leading-relaxed text-[#e3e3e3] markdown-body">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {m.content}
-                      </ReactMarkdown>
-                      <ChartRenderer content={m.content} />
-                      {isStreaming && m.id === currentSession.messages[currentSession.messages.length - 1].id && (
-                        <span className="inline-block w-2 h-4 bg-[#8ab4f8] animate-pulse ml-1 align-middle"></span>
+                .reduce((acc: any[], m, i, arr) => {
+                  // Agrupamento para modo comparação de mensagens seguidas da assistente
+                  if (i > 0 && m.role === 'assistant' && arr[i-1].role === 'assistant' && isComparisonMode) {
+                    const lastGroup = acc[acc.length - 1];
+                    if (Array.isArray(lastGroup)) {
+                      lastGroup.push(m);
+                    } else {
+                      acc[acc.length - 1] = [lastGroup, m];
+                    }
+                  } else {
+                    acc.push(m);
+                  }
+                  return acc;
+                }, [])
+                .map((item, idx, filteredArr) => {
+                  const isGroup = Array.isArray(item);
+                  
+                  if (isGroup) {
+                    return (
+                      <div key={`group-${idx}`} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                        {item.map((m: Message) => (
+                           <div key={m.id} className="bg-surface/50 border border-border-dim rounded-3xl p-6 flex flex-col h-full">
+                              <div className="flex items-center gap-2 mb-4 bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full w-fit">
+                                <Zap size={12} fill="currentColor" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest">{m.modelName || 'IA'}</span>
+                              </div>
+                              <div className="flex-1 text-[0.95rem] leading-relaxed text-[#e3e3e3] markdown-body">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  {m.content}
+                                </ReactMarkdown>
+                                {isStreaming && idx === filteredArr.length - 1 && (
+                                  <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-middle"></span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border-dim/30">
+                                <button onClick={() => handleSpeak(m.content, m.id)} className={`p-1.5 rounded-lg transition-colors ${isSpeaking === m.id ? 'text-primary' : 'text-[#9aa0a6] hover:text-white'}`}>
+                                  {isSpeaking === m.id ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                                </button>
+                                <button onClick={() => navigator.clipboard.writeText(m.content)} className="p-1.5 text-[#9aa0a6] hover:text-white transition-colors">
+                                  <Copy size={16} />
+                                </button>
+                              </div>
+                           </div>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  const m = item as Message;
+                  return (
+                    <div key={m.id} className={`flex gap-6 ${m.role === 'user' ? 'justify-end' : ''}`}>
+                      {m.role === 'assistant' && (
+                        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 mt-1 ring-2 ring-[#444746]/50 shadow-lg">
+                          <img src={MARIA_AVATAR} alt="Maria" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        </div>
+                      )}
+                      <div className={`max-w-[85%] ${m.role === 'user' ? 'bg-[#333537] px-5 py-3 rounded-[2rem]' : ''}`}>
+                        {m.modelName && (
+                          <div className="flex items-center gap-1.5 mb-2 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full w-fit">
+                              <Zap size={10} fill="currentColor" />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">{m.modelName}</span>
+                          </div>
+                        )}
+                        {m.image && (
+                          <div className="mb-4 rounded-2xl overflow-hidden border border-border-dim shadow-xl max-w-sm">
+                            <img src={m.image} className="w-full h-auto object-cover" alt="User upload" />
+                          </div>
+                        )}
+                        <div className="text-[1.05rem] leading-relaxed text-[#e3e3e3] markdown-body">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {m.content}
+                          </ReactMarkdown>
+                          <ChartRenderer content={m.content} />
+                          {isStreaming && idx === filteredArr.length - 1 && (
+                            <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-middle"></span>
+                          )}
+                        </div>
+                        {m.role === 'assistant' && !isStreaming && (
+                             <div className="flex items-center gap-4 mt-6 text-[#9aa0a6] border-t border-[#444746]/30 pt-4">
+                                <button 
+                                  onClick={() => handleSpeak(m.content, m.id)}
+                                  className={`p-2 rounded-full transition-all flex items-center gap-2 text-xs font-medium ${isSpeaking === m.id ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-[#333537]'}`}
+                                >
+                                  {isSpeaking === m.id ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                                  {isSpeaking === m.id ? 'Parar' : 'Ouvir'}
+                                </button>
+                                <button 
+                                  onClick={() => navigator.clipboard.writeText(m.content)}
+                                  className="p-2 hover:bg-[#333537] rounded-full transition-colors flex items-center gap-2 text-xs font-medium"
+                                >
+                                  <Copy size={18} />
+                                  Copiar
+                                </button>
+                             </div>
+                        )}
+                      </div>
+                      {m.role === 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center mt-1">
+                          <User size={18} className="text-white" />
+                        </div>
                       )}
                     </div>
-                    {m.role === 'assistant' && !isStreaming && (
-                         <div className="flex items-center gap-4 mt-6 text-[#9aa0a6] border-t border-[#444746]/30 pt-4">
-                            <button 
-                              onClick={() => handleSpeak(m.content, m.id)}
-                              className={`p-2 rounded-full transition-all flex items-center gap-2 text-xs font-medium ${isSpeaking === m.id ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-[#333537]'}`}
-                            >
-                              {isSpeaking === m.id ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                              {isSpeaking === m.id ? 'Parar' : 'Ouvir'}
-                            </button>
-                            <button 
-                              onClick={() => navigator.clipboard.writeText(m.content)}
-                              className="p-2 hover:bg-[#333537] rounded-full transition-colors flex items-center gap-2 text-xs font-medium"
-                            >
-                              <Copy size={18} />
-                              Copiar
-                            </button>
-                         </div>
-                    )}
-                  </div>
-                  {m.role === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center mt-1">
-                      <User size={18} className="text-white" />
-                    </div>
-                  )}
-                </div>
-              ))}
+                  );
+                })}
             </div>
           )}
         </div>
@@ -921,9 +1145,23 @@ export default function App() {
         {/* Input Area */}
         <div className="p-4 md:p-6">
           <div className="max-w-3xl mx-auto">
+            {attachedImage && (
+              <div className="mb-2 relative inline-block">
+                <img src={attachedImage} className="h-20 w-auto rounded-lg border border-primary/30 shadow-md" alt="Preview" />
+                <button 
+                  onClick={() => setAttachedImage(null)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
             <div className={`relative bg-[#1e1f20] border ${apiKey ? 'border-transparent' : 'border-red-500/50'} rounded-[2rem] p-2 focus-within:bg-[#333537] transition-all`}>
               <div className="flex items-end gap-2 px-2 py-1">
-                <button className="p-3 hover:bg-[#444746] rounded-full text-[#e3e3e3]"><FileUp size={22} /></button>
+                <label className="p-3 hover:bg-[#444746] rounded-full text-[#e3e3e3] cursor-pointer">
+                  <Image size={22} />
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
                 <textarea 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -943,9 +1181,9 @@ export default function App() {
                   </button>
                   <button 
                     onClick={handleSendMessage}
-                    disabled={!input.trim() || isStreaming || !apiKey}
+                    disabled={(!input.trim() && !attachedImage) || isStreaming || !apiKey}
                     className={`p-3 rounded-full transition-all ${
-                      input.trim() && !isStreaming && apiKey ? 'text-[#8ab4f8] hover:bg-[#444746]' : 'text-[#444746]'
+                      (input.trim() || attachedImage) && !isStreaming && apiKey ? 'text-primary hover:bg-[#444746]' : 'text-[#444746]'
                     }`}
                   >
                     <Send size={22} />
@@ -1135,11 +1373,23 @@ export default function App() {
                                         <div className="pt-6 border-t border-[#444746]">
                                             <h3 className="text-sm font-bold uppercase tracking-widest text-[#9aa0a6] mb-4 flex items-center gap-2">
                                                 <ShieldCheck size={18} className="text-blue-400" />
-                                                Segurança & Armazenamento
+                                                Segurança & Backup Local
                                             </h3>
                                             <p className="text-xs text-[#9aa0a6] mb-4 leading-relaxed">
-                                                Como o WhatsApp, suas conversas são armazenadas **apenas** no seu dispositivo local. A Maria IA não envia seus dados pessoais para a nuvem; eles permanecem salvos com segurança no cache do seu navegador/aplicativo.
+                                                Conversas salvas apenas aqui. Use o backup para mover entre aparelhos sem nuvem.
                                             </p>
+                                            <div className="grid grid-cols-2 gap-2 mb-4">
+                                                <button 
+                                                    onClick={handleExportBackup}
+                                                    className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-xl text-[10px] font-bold uppercase transition-all"
+                                                >
+                                                    <Download size={14} /> Exportar
+                                                </button>
+                                                <label className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-[10px] font-bold uppercase transition-all cursor-pointer">
+                                                    <Share2 size={14} /> Importar
+                                                    <input type="file" accept=".json" onChange={handleImportBackup} className="hidden" />
+                                                </label>
+                                            </div>
                                             <button 
                                                 onClick={handleClearAllData}
                                                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 rounded-xl text-xs font-bold uppercase transition-all"
