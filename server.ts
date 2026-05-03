@@ -3,7 +3,8 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
+import fs from "fs";
 
 dotenv.config();
 
@@ -74,14 +75,50 @@ async function startServer() {
 
     const send = (msg: string) => res.write(`data: ${JSON.stringify({ log: msg })}\n\n`);
 
-    send(`Iniciando build EAS (perfil: ${profile}, plataforma: ${platform})...`);
+    send(`Preparando projeto mobile para EAS Build (perfil: ${profile})...`);
+
+    // Prepare a clean mobile-only project in /tmp/project
+    const buildDir = "/tmp/project";
+    try {
+      fs.mkdirSync(`${buildDir}/public`, { recursive: true });
+      fs.copyFileSync(`${__dirname}/App.js`, `${buildDir}/App.js`);
+      fs.copyFileSync(`${__dirname}/app.json`, `${buildDir}/app.json`);
+      fs.copyFileSync(`${__dirname}/eas.json`, `${buildDir}/eas.json`);
+      fs.copyFileSync(`${__dirname}/public/icon.png`, `${buildDir}/public/icon.png`);
+      // Mobile-only package.json (no web deps that break EAS build)
+      const mobilePkg = {
+        name: "marina-ia",
+        version: "1.0.0",
+        main: "App.js",
+        scripts: { start: "expo start" },
+        dependencies: {
+          expo: "^52.0.49",
+          react: "18.3.1",
+          "react-native": "0.76.9",
+          "react-native-safe-area-context": "4.12.0",
+          "react-native-webview": "13.12.5",
+        },
+        devDependencies: {},
+      };
+      fs.writeFileSync(`${buildDir}/package.json`, JSON.stringify(mobilePkg, null, 2));
+      send("✅ Arquivos do projeto copiados.");
+    } catch (err: any) {
+      send(`❌ Erro ao preparar projeto: ${err.message}`);
+      res.write(`data: ${JSON.stringify({ done: true, code: 1 })}\n\n`);
+      return res.end();
+    }
 
     const child = spawn(
       "npx",
-      ["eas-cli", "build", "--platform", platform, "--profile", profile, "--non-interactive"],
+      ["eas-cli", "build", "--platform", platform, "--profile", profile, "--non-interactive", "--no-wait"],
       {
-        cwd: process.cwd(),
-        env: { ...process.env, EXPO_TOKEN: token },
+        cwd: buildDir,
+        env: {
+          ...process.env,
+          EXPO_TOKEN: token,
+          EAS_NO_VCS: "1",
+          EAS_PROJECT_ROOT: buildDir,
+        },
       }
     );
 
@@ -92,7 +129,7 @@ async function startServer() {
       d.toString().split("\n").filter(Boolean).forEach((line: string) => send(line));
     });
     child.on("close", (code) => {
-      send(code === 0 ? "✅ Build iniciado com sucesso!" : `❌ Build finalizado com código ${code}`);
+      send(code === 0 ? "✅ Build enviado para EAS! Acompanhe na aba Builds." : `❌ Build finalizado com código ${code}`);
       res.write(`data: ${JSON.stringify({ done: true, code })}\n\n`);
       res.end();
     });
