@@ -1,0 +1,6 @@
+{
+  "name": "Marina IA",
+  "description": "Seu assistente pessoal inteligente e privado.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": []
+}

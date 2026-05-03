@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Maria IA",
+    "slug": "maria-ia-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=512&h=512&auto=format&fit=crop",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=512&h=512&auto=format&fit=crop",
+      "resizeMode": "contain",
+      "backgroundColor": "#1e1f20"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.deywd.mariai"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=512&h=512&auto=format&fit=crop",
+        "backgroundColor": "#1e1f20"
+      },
+      "package": "com.deywd.mariai"
+    },
+    "web": {
+      "favicon": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=192&h=192&auto=format&fit=crop"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/seu-project-id-aqui",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "seu-project-id-aqui"
+      }
+    }
+  }
+}
