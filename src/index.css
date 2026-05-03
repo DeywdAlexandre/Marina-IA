@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: var(--accent);
+  --color-surface: var(--surface);
+  --color-background: var(--bg);
+  --color-border-dim: var(--border);
+}
+
+:root {
+  --bg: #131314;
+  --surface: #1e1f20;
+  --accent: #8ab4f8;
+  --accent-soft: rgba(138, 180, 248, 0.2);
+  --border: #444746;
+}
+
+[data-theme='emerald'] {
+  --bg: #061a15;
+  --surface: #0a2620;
+  --accent: #10b981;
+  --accent-soft: rgba(16, 185, 129, 0.2);
+  --border: #134e4a;
+}
+
+[data-theme='cyberpunk'] {
+  --bg: #0d0d0d;
+  --surface: #1a1a1a;
+  --accent: #f0abfc;
+  --accent-soft: rgba(240, 171, 252, 0.2);
+  --border: #4a044e;
+}
+
+[data-theme='ocean'] {
+  --bg: #0a192f;
+  --surface: #112240;
+  --accent: #64ffda;
+  --accent-soft: rgba(100, 255, 218, 0.2);
+  --border: #233554;
+}
+
+[data-theme='sunset'] {
+  --bg: #1a0f0f;
+  --surface: #2d1616;
+  --accent: #fb923c;
+  --accent-soft: rgba(251, 146, 60, 0.2);
+  --border: #451a03;
+}
+
+[data-theme='lavender'] {
+  --bg: #121019;
+  --surface: #1b1726;
+  --accent: #c084fc;
+  --accent-soft: rgba(192, 132, 252, 0.2);
+  --border: #3b0764;
+}
+
+body {
+  background-color: var(--bg);
+  color: #e3e3e3;
+}

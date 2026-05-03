@@ -29,7 +29,8 @@ import {
   Folder as FolderIcon,
   FolderPlus,
   ChevronRight,
-  MoreVertical
+  MoreVertical,
+  Palette
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
@@ -92,6 +93,12 @@ export default function App() {
   );
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [notifyOnComplete, setNotifyOnComplete] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem('maria_theme') || 'default');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('maria_theme', theme);
+  }, [theme]);
 
   // New model management state
   const [newModelId, setNewModelId] = useState('');
@@ -522,7 +529,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-[#131314] text-[#e3e3e3] font-sans">
+    <div className="flex h-screen bg-background text-[#e3e3e3] font-sans">
       {/* Sidebar - Desktop/Mobile-Drawer */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -540,11 +547,11 @@ export default function App() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -280, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed md:relative inset-y-0 left-0 w-[280px] border-r border-[#444746] flex flex-col bg-[#1e1f20] z-50 md:z-10"
+              className="fixed md:relative inset-y-0 left-0 w-[280px] border-r border-border-dim flex flex-col bg-surface z-50 md:z-10"
             >
               <div className="p-6 border-b border-[#444746] flex items-center justify-between">
                 <div className="flex items-center gap-3 text-[#e3e3e3]">
-                  <div className="w-9 h-9 rounded-full overflow-hidden border border-[#8ab4f8]/30 shadow-md">
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-primary/30 shadow-md">
                     <img src={MARIA_AVATAR} alt="Maria" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   </div>
                   <h1 className="font-bold text-xl tracking-tighter">Maria</h1>
@@ -556,7 +563,7 @@ export default function App() {
               <div className="flex-1 overflow-y-auto px-4 py-2">
                 <button 
                   onClick={() => handleNewChat()}
-                  className="flex items-center gap-3 px-5 py-3 bg-[#131314] hover:bg-[#333537] rounded-full transition-colors w-full mb-6 border border-[#444746] shadow-sm"
+                  className="flex items-center gap-3 px-5 py-3 bg-background hover:bg-[#333537] rounded-full transition-colors w-full mb-6 border border-border-dim shadow-sm"
                 >
                   <Plus size={20} />
                   <span className="text-sm font-medium">Nova conversa</span>
@@ -600,8 +607,8 @@ export default function App() {
                                     }}
                                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs transition-all text-left truncate pr-10 ${
                                       currentSessionId === s.id 
-                                        ? 'bg-[#004a77] text-[#c2e7ff] shadow-md' 
-                                        : 'hover:bg-[#333537] bg-[#131314]/30'
+                                        ? 'bg-primary/20 text-primary shadow-md border border-primary/30' 
+                                        : 'hover:bg-primary/10 bg-background/30'
                                     }`}
                                   >
                                     <History size={14} className="flex-shrink-0 opacity-70" />
@@ -649,8 +656,8 @@ export default function App() {
                             }}
                             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm transition-all text-left truncate pr-12 ${
                               currentSessionId === s.id 
-                                ? 'bg-[#004a77] text-[#c2e7ff] shadow-lg shadow-blue-900/20' 
-                                : 'hover:bg-[#333537] bg-[#131314]/50 border border-[#444746]/30'
+                                ? 'bg-primary/20 text-primary shadow-lg shadow-primary/10 border border-primary/30' 
+                                : 'hover:bg-primary/10 bg-background/50 border border-border-dim/30'
                             }`}
                           >
                             <History size={18} className="flex-shrink-0 opacity-70" />
@@ -724,7 +731,7 @@ export default function App() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full left-0 mt-2 w-72 bg-[#1e1f20] border border-[#444746] rounded-xl shadow-2xl z-50 overflow-hidden py-2"
+                    className="absolute top-full left-0 mt-2 w-72 bg-surface border border-border-dim rounded-xl shadow-2xl z-50 overflow-hidden py-2"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="px-3 py-2 border-b border-[#444746] mb-1">
@@ -1044,7 +1051,7 @@ export default function App() {
                                             </div>
                                             <button 
                                                 onClick={handleToggleNotifications}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${notificationPermission === 'granted' ? 'bg-[#8ab4f8]' : 'bg-[#333537]'}`}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${notificationPermission === 'granted' ? 'bg-primary' : 'bg-border-dim/50'}`}
                                             >
                                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notificationPermission === 'granted' ? 'translate-x-6' : 'translate-x-1'}`} />
                                             </button>
@@ -1052,7 +1059,7 @@ export default function App() {
 
                                         <div className="flex items-center justify-between bg-[#131314] border border-[#444746] rounded-xl px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                <History size={18} className={notifyOnComplete ? "text-[#8ab4f8]" : "text-[#9aa0a6]"} />
+                                                <History size={18} className={notifyOnComplete ? "text-primary" : "text-[#9aa0a6]"} />
                                                 <div>
                                                     <p className="text-sm font-medium">Alertar Respostas</p>
                                                     <p className="text-[0.65rem] text-[#9aa0a6]">Notificar quando a Maria terminar uma resposta longa</p>
@@ -1060,7 +1067,7 @@ export default function App() {
                                             </div>
                                             <button 
                                                 onClick={() => setNotifyOnComplete(!notifyOnComplete)}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${notifyOnComplete ? 'bg-[#8ab4f8]' : 'bg-[#333537]'}`}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${notifyOnComplete ? 'bg-primary' : 'bg-border-dim/50'}`}
                                             >
                                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifyOnComplete ? 'translate-x-6' : 'translate-x-1'}`} />
                                             </button>
@@ -1074,7 +1081,7 @@ export default function App() {
                                                     setSelectedVoiceURI(e.target.value);
                                                     localStorage.setItem('maria_voice_uri', e.target.value);
                                                 }}
-                                                className="w-full bg-[#131314] border border-[#444746] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#8ab4f8] transition-colors"
+                                                className="w-full bg-background border border-border-dim rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-colors"
                                             >
                                                 <option value="">Padrão do Sistema</option>
                                                 {availableVoices
@@ -1092,6 +1099,37 @@ export default function App() {
                                                     }
                                                 </optgroup>
                                             </select>
+                                        </div>
+
+                                        <div className="pt-6 border-t border-[#444746]">
+                                            <h3 className="text-sm font-bold uppercase tracking-widest text-[#9aa0a6] mb-4 flex items-center gap-2">
+                                                <Palette size={18} className="text-pink-400" />
+                                                Temas Personalizados
+                                            </h3>
+                                            <div className="grid grid-cols-3 gap-2 mb-6">
+                                                {[
+                                                    { id: 'default', name: 'Midnight', color: '#8ab4f8', bg: '#131314' },
+                                                    { id: 'emerald', name: 'Esmeralda', color: '#10b981', bg: '#061a15' },
+                                                    { id: 'cyberpunk', name: 'Cyber', color: '#f0abfc', bg: '#0d0d0d' },
+                                                    { id: 'ocean', name: 'Oceano', color: '#64ffda', bg: '#0a192f' },
+                                                    { id: 'sunset', name: 'Pôr do Sol', color: '#fb923c', bg: '#1a0f0f' },
+                                                    { id: 'lavender', name: 'Lavanda', color: '#c084fc', bg: '#121019' },
+                                                ].map(t => (
+                                                    <button
+                                                        key={t.id}
+                                                        onClick={() => setTheme(t.id)}
+                                                        className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all ${
+                                                            theme === t.id ? 'border-primary bg-surface' : 'border-border-dim hover:bg-surface/50'
+                                                        }`}
+                                                    >
+                                                        <div 
+                                                            className="w-full h-8 rounded-lg shadow-inner"
+                                                            style={{ backgroundColor: t.bg, border: `2px solid ${t.color}` }}
+                                                        />
+                                                        <span className="text-[0.6rem] font-bold uppercase tracking-tighter truncate w-full text-center">{t.name}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
 
                                         <div className="pt-6 border-t border-[#444746]">
@@ -1118,19 +1156,19 @@ export default function App() {
                                 <div>
                                     <h3 className="text-sm font-bold uppercase tracking-widest text-[#9aa0a6] mb-4">Gerenciar Modelos</h3>
                                     
-                                    <div className="bg-[#131314] border border-[#444746] rounded-2xl p-4 mb-4">
+                                    <div className="bg-background border border-border-dim rounded-2xl p-4 mb-4">
                                         <p className="text-xs font-medium mb-3 uppercase tracking-wider">Adicionar Novo</p>
                                         <input 
                                             placeholder="ID do Modelo (ex: openai/gpt-4)"
                                             value={newModelId}
                                             onChange={(e) => setNewModelId(e.target.value)}
-                                            className="w-full bg-[#1e1f20] border border-[#444746] rounded-lg px-3 py-2 text-xs mb-2 outline-none"
+                                            className="w-full bg-surface border border-border-dim rounded-lg px-3 py-2 text-xs mb-2 outline-none"
                                         />
                                         <input 
                                             placeholder="Nome amigável"
                                             value={newModelName}
                                             onChange={(e) => setNewModelName(e.target.value)}
-                                            className="w-full bg-[#1e1f20] border border-[#444746] rounded-lg px-3 py-2 text-xs mb-3 outline-none"
+                                            className="w-full bg-surface border border-border-dim rounded-lg px-3 py-2 text-xs mb-3 outline-none"
                                         />
                                         <button 
                                             onClick={handleAddModel}

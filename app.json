@@ -29,7 +29,7 @@
       "favicon": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=192&h=192&auto=format&fit=crop"
     },
     "updates": {
-      "url": "https://u.expo.dev/seu-project-id-aqui",
+      "url": "https://u.expo.dev/55d45fb8-95bf-4cf8-b5a7-5a0f53ae3d7c",
       "fallbackToCacheTimeout": 0
     },
     "runtimeVersion": {
@@ -37,7 +37,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "seu-project-id-aqui"
+        "projectId": "55d45fb8-95bf-4cf8-b5a7-5a0f53ae3d7c"
       }
     }
   }
