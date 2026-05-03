@@ -16,14 +16,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.deywd.marinai"
+      "bundleIdentifier": "com.deywd.mariai"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=512&h=512&auto=format&fit=crop",
         "backgroundColor": "#1e1f20"
       },
-      "package": "com.deywd.marinai"
+      "package": "com.deywd.mariai"
     },
     "web": {
       "favicon": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=192&h=192&auto=format&fit=crop"
