@@ -35,7 +35,8 @@ import {
   Layers,
   Zap,
   X,
-  Image
+  Image,
+  Smartphone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
@@ -60,6 +61,7 @@ import html2canvas from 'html2canvas';
 import { DEFAULT_MODELS, chatWithOpenRouter } from './services/aiService';
 import { Message, ChatSession, Folder } from './types/expo';
 import { storageService } from './services/storageService';
+import EasDashboard from './EasDashboard';
 
 export default function App() {
   const [apiKey, setApiKey] = useState(storageService.loadApiKey());
@@ -121,6 +123,7 @@ export default function App() {
   const [theme, setTheme] = useState(localStorage.getItem('marina_theme') || 'default');
   const [isComparisonMode, setIsComparisonMode] = useState(false);
   const [comparisonModelIds, setComparisonModelIds] = useState<string[]>([]);
+  const [showEasDashboard, setShowEasDashboard] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -847,6 +850,13 @@ export default function App() {
               </div>
 
             <div className="mt-auto p-4 border-t border-[#444746] space-y-2">
+              <button
+                onClick={() => setShowEasDashboard(true)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary/10 text-primary rounded-full text-sm transition-colors border border-primary/20"
+              >
+                <Smartphone size={18} />
+                <span className="font-medium">App Mobile / EAS</span>
+              </button>
               <button 
                 onClick={() => setShowSettings(!showSettings)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#333537] rounded-full text-sm transition-colors"
@@ -1490,6 +1500,13 @@ export default function App() {
             )}
         </AnimatePresence>
       </main>
+
+      {/* EAS Dashboard */}
+      <AnimatePresence>
+        {showEasDashboard && (
+          <EasDashboard onClose={() => setShowEasDashboard(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
