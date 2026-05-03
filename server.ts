@@ -10,7 +10,7 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PROJECT_ID = "55d45fb8-95bf-4cf8-b5a7-5a0f53ae3d7c";
+const PROJECT_ID = "67dd5514-4060-4cc9-8ac6-eaaa5ee21c16";
 const EXPO_API = "https://api.expo.dev";
 
 function getToken(): string | null {

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Marina IA",
-    "slug": "maria-ia",
+    "slug": "marina-ia",
     "version": "1.0.0",
     "platforms": ["android"],
     "orientation": "portrait",
@@ -26,7 +26,7 @@
       "favicon": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=192&h=192&auto=format&fit=crop"
     },
     "updates": {
-      "url": "https://u.expo.dev/55d45fb8-95bf-4cf8-b5a7-5a0f53ae3d7c",
+      "url": "https://u.expo.dev/67dd5514-4060-4cc9-8ac6-eaaa5ee21c16",
       "fallbackToCacheTimeout": 0
     },
     "runtimeVersion": {
@@ -34,7 +34,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "55d45fb8-95bf-4cf8-b5a7-5a0f53ae3d7c"
+        "projectId": "67dd5514-4060-4cc9-8ac6-eaaa5ee21c16"
       }
     }
   }
