@@ -152,6 +152,28 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
     return out;
   },
   'get-service | select-object status -unique': `\nStatus\n------\nRunning\nStopped\n`,
+
+  // === Módulo 4: Navegação e Arquivos ===
+  'cd ..': '', // No TerminalSimulator a gente não tá mudando o currentPath dinamicamente ainda (para ficar simples), então podemos retornar vazio.
+  'cd ~': '',
+  'set-location ..': '',
+  'new-item -path "relatorio.txt" -itemtype file': `\n    Directory: C:\\Users\\Aluno\n\nMode                 LastWriteTime         Length Name\n----                 -------------         ------ ----\n-a----        ${new Date().toLocaleDateString('pt-BR')}  ${new Date().toLocaleTimeString('pt-BR').slice(0,5)}             0 relatorio.txt\n`,
+  'new-item -path "projetos" -itemtype directory': `\n    Directory: C:\\Users\\Aluno\n\nMode                 LastWriteTime         Length Name\n----                 -------------         ------ ----\nd-----        ${new Date().toLocaleDateString('pt-BR')}  ${new Date().toLocaleTimeString('pt-BR').slice(0,5)}               Projetos\n`,
+  'mkdir projetos': `\n    Directory: C:\\Users\\Aluno\n\nMode                 LastWriteTime         Length Name\n----                 -------------         ------ ----\nd-----        ${new Date().toLocaleDateString('pt-BR')}  ${new Date().toLocaleTimeString('pt-BR').slice(0,5)}               Projetos\n`,
+  'copy-item -path "relatorio.txt" -destination "relatorio_backup.txt"': '',
+  'cp relatorio.txt relatorio_backup.txt': '',
+  'move-item -path "relatorio.txt" -destination ".\\projetos\\"': '',
+  'mv relatorio.txt .\\projetos\\': '',
+  'rename-item -path "relatorio.txt" -newname "relatorio_final.txt"': '',
+  'remove-item -path "relatorio_velho.txt"': '',
+  'rm relatorio_velho.txt': '',
+  'get-content -path "c:\\logs\\erro.log"': `\n[ERROR] Falha na conexão com banco de dados\n[WARN] Memória acima de 80%\n[INFO] Reiniciando serviço...\n[ERROR] Timeout na requisição API\n`,
+  'cat c:\\logs\\erro.log': `\n[ERROR] Falha na conexão com banco de dados\n[WARN] Memória acima de 80%\n[INFO] Reiniciando serviço...\n[ERROR] Timeout na requisição API\n`,
+  'get-content erro.log -tail 10': `\n[INFO] Backup iniciado...\n[INFO] Backup concluído com sucesso.\n[WARN] CPU atingiu 95%\n[ERROR] Timeout na requisição API\n`,
+  'get-process | out-file -filepath "processos_rodando.txt"': '',
+  'get-date | out-file -filepath "registro.txt" -append': '',
+  '"olá mundo!" > saudacao.txt': '',
+  'get-date >> saudacao.txt': '',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
