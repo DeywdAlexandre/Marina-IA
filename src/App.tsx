@@ -272,9 +272,15 @@ Você pode agendar lembretes nativos no celular do usuário.
 Sempre que o usuário pedir para ser lembrado de algo, você DEVE gerar sua resposta normalmente e, ao final, anexar EXATAMENTE este bloco:
 [REMINDER: {"title": "O que lembrar", "body": "Detalhes", "trigger": "ISO_TIMESTAMP"}]
 
+[VOCAL DESIGN - NATURALIDADE]:
+Como você é frequentemente ouvida via áudio, siga estas regras de fala:
+1. Use frases CURTAS e diretas. Evite parágrafos densos.
+2. Use vírgulas e reticências (...) para criar pausas naturais onde uma pessoa respiraria.
+3. Use expressões de transição como "Olha,", "Então,", "Pois é," para soar mais humana.
+4. NUNCA use símbolos como asteriscos (*), hashtags (#) ou negritos na fala, pois o sintetizador de voz pode se confundir.
+
 Data/Hora Atual (Brasília): ${brTime}
-Considere o fuso horário UTC-3 para calcular o "trigger" (formato ISO 8601).
-Exemplo: Se o usuário diz "me lembre em 10 min", calcule o horário exato e gere o bloco.`;
+Fuso: UTC-3.`;
 
       const systemPrompt = selectedPersona 
         ? `${selectedPersona.prompt}${memoryContext}${ragContext}\n${agentInstructions}`
@@ -388,7 +394,7 @@ Exemplo: Se o usuário diz "me lembre em 10 min", calcule o horário exato e ger
     const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{3297}\u{3299}\u{303D}\u{00A9}\u{00AE}\u{2122}\u{23F3}]/gu;
     utterance.text = text.replace(emojiRegex, '').replace(/[\*\#\`]/g, '').trim();
     utterance.lang = 'pt-BR';
-    utterance.rate = 1.12; // Velocidade otimizada solicitada pelo usuário
+    utterance.rate = 1.2; // Velocidade otimizada para 1.2x conforme solicitado
     
     const voices = window.speechSynthesis.getVoices();
     if (selectedVoiceURI) {
