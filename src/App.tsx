@@ -402,12 +402,12 @@ Fuso: UTC-3.`;
       .replace(/#+\s/g, '') // Remove títulos
       .replace(/`{1,3}[\s\S]*?`{1,3}/g, 'código omitido') // Oculta blocos de código na fala
       .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Mantém apenas o texto de links
-      .replace(/[\*\#-]\s/g, '. ') // Transforma listas em pausas (pontos)
+      .replace(/[\*\#-]\s/g, ' ') // Transforma listas em pausas (espaço)
       .replace(/[`#<>|\\\/]/g, '') // Remove símbolos estranhos
       .trim();
 
-    // Adiciona um buffer de silêncio no final para evitar cortes no Android
-    utterance.text = cleanText + " . . . ";
+    // Adiciona um buffer de silêncio (usando vírgulas que não são lidas) para evitar cortes
+    utterance.text = cleanText + " , , , ";
     utterance.lang = 'pt-BR';
     utterance.rate = 1.2; // Velocidade otimizada para 1.2x conforme solicitado
     
