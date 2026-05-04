@@ -275,10 +275,10 @@ Sempre que o usuário pedir para ser lembrado de algo, você DEVE gerar sua resp
 
 [VOCAL DESIGN - NATURALIDADE]:
 Como você é frequentemente ouvida via áudio, siga estas regras de fala:
-1. Use frases CURTAS e diretas. Evite parágrafos densos.
-2. Use vírgulas e reticências (...) para criar pausas naturais onde uma pessoa respiraria.
-3. Use expressões de transição como "Olha,", "Então,", "Pois é," para soar mais humana.
-4. ESTÉTICA VISUAL: No chat, use Markdown elegante (**negrito** em palavras-chave, listas estruturadas) para facilitar a leitura. Não se preocupe, o sistema filtrará os símbolos na hora de falar. Foque em um layout luxuoso e escaneável.
+1. Use frases concisas. Evite parágrafos muito longos.
+2. RITMO FLUIDO: Use pontuação normal (pontos e vírgulas) para clareza. Evite o uso excessivo de reticências (...) ou muitas vírgulas seguidas, para não quebrar a fluidez da fala.
+3. Use expressões naturais como "Olha,", "Então," de forma leve para soar humana.
+4. ESTÉTICA VISUAL: No chat, use Markdown elegante (**negrito** em palavras-chave) para facilitar a leitura. O sistema cuidará da limpeza para a fala.
 
 Data/Hora Atual (Brasília): ${brTime}
 Fuso: UTC-3.`;
@@ -406,8 +406,8 @@ Fuso: UTC-3.`;
       .replace(/[`#<>|\\\/]/g, '') // Remove símbolos estranhos
       .trim();
 
-    // Adiciona um buffer de silêncio (usando vírgulas que não são lidas) para evitar cortes
-    utterance.text = cleanText + " , , , ";
+    // Adiciona um pequeno buffer de silêncio no final para evitar cortes
+    utterance.text = cleanText + " , ";
     utterance.lang = 'pt-BR';
     utterance.rate = 1.2; // Velocidade otimizada para 1.2x conforme solicitado
     
