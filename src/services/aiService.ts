@@ -1,16 +1,18 @@
 
 export const DEFAULT_MODELS = [
-  { id: 'google/gemma-2-9b-it:free', name: 'Gemma 2 9B (Free)', isFree: true },
-  { id: 'mistralai/mistral-nemo', name: 'Mistral Nemo (Value)', isFree: false },
-  { id: 'perplexity/llama-3.1-sonar-small-128k-online', name: 'Marina Search (Online)', isFree: false },
-  { id: 'openai/gpt-4o-mini', name: 'GPT 5 Nano (Experimental)', isFree: false }
+  { id: 'google/gemma-2-9b-it:free', name: 'Gemma 2 9B (Free)', isFree: true, pricing: { prompt: 0, completion: 0 } },
+  { id: 'mistralai/mistral-nemo', name: 'Mistral Nemo (Value)', isFree: false, pricing: { prompt: 0.1, completion: 0.1 } },
+  { id: 'perplexity/llama-3.1-sonar-small-128k-online', name: 'Marina Search (Online)', isFree: false, pricing: { prompt: 0.2, completion: 0.2 } },
+  { id: 'openai/gpt-4o-mini', name: 'GPT 5 Nano (Experimental)', isFree: false, pricing: { prompt: 0.15, completion: 0.6 } },
+  { id: 'google/gemini-flash-1.5-8b', name: 'Gemini 8B (Fast)', isFree: false, pricing: { prompt: 0.0375, completion: 0.15 } }
 ];
 
 export async function chatWithOpenRouter(
   apiKey: string,
   model: string,
   messages: any[],
-  onStream?: (chunk: string) => void
+  onStream?: (chunk: string) => void,
+  onUsage?: (usage: { prompt_tokens: number, completion_tokens: number }) => void
 ) {
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -24,7 +26,8 @@ export async function chatWithOpenRouter(
       body: JSON.stringify({
         "model": model,
         "messages": messages,
-        "stream": true
+        "stream": true,
+        "stream_options": { "include_usage": true }
       })
     });
 
@@ -44,7 +47,6 @@ export async function chatWithOpenRouter(
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
       
-      // Mantém a última linha no buffer caso esteja incompleta
       buffer = lines.pop() || "";
       
       for (const line of lines) {
@@ -56,11 +58,20 @@ export async function chatWithOpenRouter(
         
         try {
           const parsed = JSON.parse(data);
-          const content = parsed.choices[0]?.delta?.content || "";
+          
+          // Captura metadados de uso
+          if (parsed.usage && onUsage) {
+            onUsage({
+              prompt_tokens: parsed.usage.prompt_tokens,
+              completion_tokens: parsed.usage.completion_tokens
+            });
+          }
+
+          const content = parsed.choices?.[0]?.delta?.content || "";
           fullText += content;
           if (onStream) onStream(content);
         } catch (e) {
-          // Fragmento possivelmente incompleto, ignorar e esperar próximo chunk
+          // Fragmento incompleto
         }
       }
     }

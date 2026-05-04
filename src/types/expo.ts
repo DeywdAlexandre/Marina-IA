@@ -46,6 +46,20 @@ export interface Persona {
   icon?: string;
 }
 
+export interface Fact {
+  id: string;
+  content: string;
+  category?: string;
+  timestamp: number;
+}
+
+export interface PromptTemplate {
+  id: string;
+  title: string;
+  content: string;
+  icon?: string;
+}
+
 export interface OpenRouterModel {
   id: string;
   name: string;

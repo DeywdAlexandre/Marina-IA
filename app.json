@@ -3,7 +3,9 @@
     "name": "Marina IA",
     "slug": "marina-ia",
     "version": "1.0.0",
-    "platforms": ["android"],
+    "platforms": [
+      "android"
+    ],
     "orientation": "portrait",
     "icon": "./public/icon.png",
     "userInterfaceStyle": "dark",
@@ -20,7 +22,14 @@
         "foregroundImage": "./public/icon.png",
         "backgroundColor": "#1e1f20"
       },
-      "package": "com.deywd.mariai"
+      "package": "com.deywd.mariai",
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=192&h=192&auto=format&fit=crop"
@@ -36,6 +45,18 @@
       "eas": {
         "projectId": "67dd5514-4060-4cc9-8ac6-eaaa5ee21c16"
       }
-    }
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-local-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app precisa acessar suas fotos para que a Marina possa analisá-las.",
+          "cameraPermission": "O app precisa acessar sua câmera para que a Marina possa ver o mundo."
+        }
+      ]
+    ]
   }
 }

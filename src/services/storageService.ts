@@ -1,3 +1,4 @@
+import { nativeBridge } from './nativeBridge';
 
 export const storageService = {
   saveSessions(sessions: any[]) {
@@ -9,11 +10,17 @@ export const storageService = {
     return data ? JSON.parse(data) : [];
   },
 
-  saveApiKey(key: string) {
+  async saveApiKey(key: string) {
     localStorage.setItem('openrouter_api_key', key);
+    await nativeBridge.saveSecure('openrouter_api_key', key);
   },
 
-  loadApiKey() {
+  async loadApiKey() {
+    const secureKey = await nativeBridge.getSecure('openrouter_api_key');
+    if (secureKey) {
+      localStorage.setItem('openrouter_api_key', secureKey);
+      return secureKey;
+    }
     return localStorage.getItem('openrouter_api_key') || '';
   },
 
@@ -41,6 +48,15 @@ export const storageService = {
 
   loadCustomModels() {
     const data = localStorage.getItem('custom_models');
+    return data ? JSON.parse(data) : [];
+  },
+
+  saveTemplates(templates: any[]) {
+    localStorage.setItem('prompt_templates', JSON.stringify(templates));
+  },
+
+  loadTemplates() {
+    const data = localStorage.getItem('prompt_templates');
     return data ? JSON.parse(data) : [];
   }
 };

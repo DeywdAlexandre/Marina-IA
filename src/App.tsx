@@ -1,46 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Menu, 
-  Plus, 
-  Send, 
-  Mic, 
-  Volume2, 
-  VolumeX,
-  Copy,
-  FileUp, 
-  Settings as SettingsIcon,
-  ChevronDown,
-  User,
-  History,
-  Trash2,
-  AlertCircle,
-  Bell,
-  BellOff,
-  Star,
-  Globe,
-  Eye,
-  EyeOff,
-  Search,
-  Download,
-  Share2,
-  ShieldCheck,
-  FileText,
-  BarChart2,
-  Folder as FolderIcon,
-  FolderPlus,
-  ChevronRight,
-  MoreVertical,
-  Palette,
-  Columns,
-  Layers,
-  Zap,
-  X,
-  Image,
-  Smartphone
-} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { 
   ResponsiveContainer, 
   BarChart, 
@@ -55,17 +16,37 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
-import { DEFAULT_MODELS, chatWithOpenRouter } from './services/aiService';
-import { Message, ChatSession, Folder } from './types/expo';
-import { storageService } from './services/storageService';
+// Componentes
+import Sidebar from './components/Sidebar';
+import ChatArea from './components/ChatArea';
+import SettingsModal from './components/SettingsModal';
+import VoiceMode from './components/VoiceMode';
 import EasDashboard from './EasDashboard';
+import { PromptLibrary } from './components/PromptLibrary';
+import { ArtifactsPanel, Artifact } from './components/ArtifactsPanel';
+
+// Serviços e Tipos
+import { DEFAULT_MODELS, chatWithOpenRouter } from './services/aiService';
+import { Message, ChatSession, Folder, Persona, PromptTemplate, Fact } from './types/expo';
+import { storageService } from './services/storageService';
+import { nativeBridge } from './services/nativeBridge';
+import { memoryService } from './services/memoryService';
+import { ragService, IndexedDocument } from './services/ragService';
 
 export default function App() {
-  const [apiKey, setApiKey] = useState(storageService.loadApiKey());
+  // --- Estados ---
+  const [apiKey, setApiKey] = useState('');
+  const [templates, setTemplates] = useState<PromptTemplate[]>(() => storageService.loadTemplates());
+  const [indexedFiles, setIndexedFiles] = useState<IndexedDocument[]>(() => ragService.getDocs());
+  const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
+  const [isArtifactsOpen, setIsArtifactsOpen] = useState(false);
+  const [isPromptLibraryOpen, setIsPromptLibraryOpen] = useState(false);
+  const [biometricsEnabled, setBiometricsEnabled] = useState(() => localStorage.getItem('marina_biometrics_enabled') === 'true');
+  const [isLocked, setIsLocked] = useState(biometricsEnabled);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [totalCost, setTotalCost] = useState(() => Number(localStorage.getItem('marina_total_cost') || 0));
+  const [facts, setFacts] = useState<Fact[]>(() => memoryService.loadFacts());
   const [availableModels, setAvailableModels] = useState(() => {
     const custom = storageService.loadCustomModels();
     return [...DEFAULT_MODELS, ...custom];
@@ -81,36 +62,17 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showModelList, setShowModelList] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [modelSearchQuery, setModelSearchQuery] = useState('');
-  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isSearchEnabled, setIsSearchEnabled] = useState(false);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Imagem muito grande! Máximo 2MB para preservar armazenamento local.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setAttachedImage(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
   const [isSpeaking, setIsSpeaking] = useState<string | null>(null);
   const [chatSearchTerm, setChatSearchTerm] = useState('');
   const [folders, setFolders] = useState<Folder[]>(storageService.loadFolders());
   const [personas, setPersonas] = useState<Persona[]>(storageService.loadPersonas());
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
-  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
-  const [newFolderName, setNewFolderName] = useState('');
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-  const MARINA_AVATAR = "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=200&h=200&auto=format&fit=crop";
+  const [newFolderName, setNewFolderName] = useState('');
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>(() => {
     return localStorage.getItem('marina_voice_uri') || '';
@@ -124,34 +86,56 @@ export default function App() {
   const [isComparisonMode, setIsComparisonMode] = useState(false);
   const [comparisonModelIds, setComparisonModelIds] = useState<string[]>([]);
   const [showEasDashboard, setShowEasDashboard] = useState(false);
+  const [newModelId, setNewModelId] = useState('');
+  const [newModelName, setNewModelName] = useState('');
+  const [isVoiceModeOpen, setIsVoiceModeOpen] = useState(false);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const MARINA_AVATAR = "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=200&h=200&auto=format&fit=crop";
+
+  const currentSession = sessions.find(s => s.id === currentSessionId);
+
+  // --- Effects ---
+  useEffect(() => {
+    localStorage.setItem('marina_biometrics_enabled', String(biometricsEnabled));
+  }, [biometricsEnabled]);
+
+  useEffect(() => {
+    if (isLocked) {
+      handleAuthenticate();
+    }
+  }, []);
+
+  const handleAuthenticate = async () => {
+    const success = await nativeBridge.authenticate();
+    if (success) {
+      setIsLocked(false);
+      nativeBridge.haptic('success');
+    }
+  };
+
+  useEffect(() => {
+    localStorage.setItem('marina_total_cost', totalCost.toFixed(6));
+  }, [totalCost]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('marina_theme', theme);
   }, [theme]);
 
-  const toggleComparisonModel = (modelId: string) => {
-    setComparisonModelIds(prev => 
-      prev.includes(modelId) 
-        ? prev.filter(id => id !== modelId) 
-        : prev.length < 3 ? [...prev, modelId] : prev
-    );
-  };
-
-  // New model management state
-  const [newModelId, setNewModelId] = useState('');
-  const [newModelName, setNewModelName] = useState('');
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const currentSession = sessions.find(s => s.id === currentSessionId);
+  useEffect(() => {
+    const loadKey = async () => {
+      const key = await storageService.loadApiKey();
+      if (key) setApiKey(key);
+    };
+    loadKey();
+  }, []);
 
   useEffect(() => {
-    storageService.saveApiKey(apiKey);
+    if (apiKey) storageService.saveApiKey(apiKey);
   }, [apiKey]);
 
   useEffect(() => {
-    // Apenas salva sessões que têm mensagens ou a sessão atual (se for nova)
     const sessionsToSave = sessions.filter(s => s.messages.length > 0 || s.id === currentSessionId);
     storageService.saveSessions(sessionsToSave);
   }, [sessions, currentSessionId]);
@@ -169,183 +153,415 @@ export default function App() {
     storageService.saveCustomModels(customOnly);
   }, [availableModels]);
 
-  const handleAddModel = () => {
-    if (!newModelId.trim() || !newModelName.trim()) return;
-    if (availableModels.some(m => m.id === newModelId)) {
-        alert("Este ID de modelo já existe.");
-        return;
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      setAvailableVoices(voices);
+    };
+    loadVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
     }
-    const nm = { id: newModelId.trim(), name: newModelName.trim() };
-    setAvailableModels([...availableModels, nm]);
-    setNewModelId('');
-    setNewModelName('');
-  };
+  }, []);
 
-  const handleRemoveModel = (id: string) => {
-    if (DEFAULT_MODELS.some(m => m.id === id)) {
-        alert("Não é possível remover modelos padrão.");
-        return;
-    }
-    setAvailableModels(availableModels.filter(m => m.id !== id));
-    if (activeModel === id) {
-        setActiveModel(DEFAULT_MODELS[0].id);
-    }
-  };
-
-  const handleDeleteSession = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (deletingSessionId === id) {
-      const updatedSessions = sessions.filter(s => s.id !== id);
-      setSessions(updatedSessions);
-      if (currentSessionId === id) {
-        setCurrentSessionId(null);
-      }
-      setDeletingSessionId(null);
+  useEffect(() => {
+    if (sessions.length === 0) {
+      handleNewChat();
+    } else if (sessions[0].messages.length > 0) {
+      handleNewChat();
     } else {
-      setDeletingSessionId(id);
-      setTimeout(() => {
-        setDeletingSessionId(prev => prev === id ? null : prev);
-      }, 3000);
+      setCurrentSessionId(sessions[0].id);
     }
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [currentSession?.messages, isStreaming]);
+
+  // --- Handlers ---
+  const handleNewChat = (folderId?: string) => {
+    const newSession: ChatSession = {
+      id: Date.now().toString(),
+      title: 'Nova conversa',
+      messages: [],
+      modelId: activeModel,
+      folderId
+    };
+    setSessions([newSession, ...sessions]);
+    setCurrentSessionId(newSession.id);
   };
 
-  const handleMicClick = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Imagem muito grande! Máximo 2MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => setAttachedImage(event.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || isStreaming) return;
+
+    if (!apiKey) {
+      alert("Por favor, configure sua API Key nas configurações para conversar com a Marina.");
+      setShowSettings(true);
+      return;
+    }
+
+    const textToSearch = input.trim();
+    let sessionId = currentSessionId;
+
+    if (!sessionId) {
+      const newSession: ChatSession = {
+        id: Date.now().toString(),
+        title: textToSearch.slice(0, 30) || 'Nova Conversa',
+        messages: [],
+        timestamp: Date.now(),
+        modelId: activeModel
+      };
+      setSessions(prev => [newSession, ...prev]);
+      setCurrentSessionId(newSession.id);
+      sessionId = newSession.id;
+    }
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input,
+      timestamp: Date.now(),
+      image: attachedImage || undefined
+    };
+
+    setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: [...s.messages, userMessage] } : s));
+    setInput('');
+    setAttachedImage(null);
+    setIsStreaming(true);
+    nativeBridge.haptic('light');
+
+    const modelsToProcess = isComparisonMode && comparisonModelIds.length > 0 
+      ? comparisonModelIds 
+      : [isSearchEnabled ? 'perplexity/llama-3.1-sonar-small-128k-online' : activeModel];
+
+    const currentSessionObj = sessions.find(s => s.id === sessionId);
+    const selectedPersona = personas.find(p => p.id === selectedPersonaId);
     
-    if (!SpeechRecognition) {
-      alert("Seu navegador não suporta reconhecimento de voz.");
-      return;
+    // Pesquisa na memória seletiva e nos documentos (RAG)
+    const relevantFacts = memoryService.searchRelevantFacts(textToSearch);
+    const relevantDocs = ragService.searchRelevantChunks(textToSearch);
+
+    const memoryContext = relevantFacts.length > 0 
+      ? `\n[MEMÓRIA LOCAL]: Você lembra disso sobre o usuário: ${relevantFacts.map(f => f.content).join('; ')}`
+      : "";
+    
+    const ragContext = relevantDocs 
+      ? `\n[CONHECIMENTO DOS DOCUMENTOS ANEXADOS]:\nUse as informações abaixo para responder se forem relevantes:\n${relevantDocs}`
+      : "";
+
+    const systemPrompt = selectedPersona 
+      ? `${selectedPersona.prompt}${memoryContext}${ragContext}`
+      : `Você é a Marina IA, uma assistente pessoal inteligente, prestativa e elegante. Você tem uma personalidade empática e profissional.${memoryContext}${ragContext}`;
+
+    const baseHistory = [
+      { role: 'system', content: systemPrompt },
+      ...(currentSessionObj?.messages || []).map(m => ({ role: m.role, content: m.content })),
+      { role: userMessage.role, content: userMessage.content }
+    ];
+
+    try {
+      await Promise.all(modelsToProcess.map(async (modelId) => {
+        const modelName = availableModels.find(m => m.id === modelId)?.name || modelId.split('/').pop() || 'IA';
+        const assistantMessageId = (Date.now() + Math.random()).toString();
+        const assistantMessage: Message = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: '',
+          timestamp: Date.now(),
+          modelName: isComparisonMode ? modelName : undefined
+        };
+
+        setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: [...s.messages, assistantMessage] } : s));
+
+        let accumulated = "";
+        const modelData = availableModels.find(m => m.id === modelId);
+        const pricing = modelData?.pricing || { prompt: 0.1, completion: 0.1 };
+
+        await chatWithOpenRouter(apiKey, modelId, baseHistory, (chunk) => {
+          if (!accumulated) nativeBridge.haptic('light');
+          accumulated += chunk;
+          
+          if (accumulated.includes('<!DOCTYPE html>') || accumulated.includes('<html') || accumulated.includes('<svg')) {
+            const title = accumulated.match(/<title>(.*?)<\/title>/)?.[1] || 'Web Preview';
+            setActiveArtifact({
+              id: assistantMessageId,
+              type: 'html',
+              content: accumulated,
+              title: title
+            });
+            setIsArtifactsOpen(true);
+          }
+
+          setSessions(prev => prev.map(s => 
+            s.id === sessionId ? {
+              ...s,
+              messages: s.messages.map(m => m.id === assistantMessageId ? { ...m, content: accumulated } : m)
+            } : s
+          ));
+        }, (usage) => {
+          const cost = (usage.prompt_tokens / 1000 * pricing.prompt) + (usage.completion_tokens / 1000 * pricing.completion);
+          setTotalCost(prev => prev + cost);
+        });
+
+        if (accumulated) {
+          extractFactsFromConversation(userMessage.content, accumulated);
+          // Dispara a fala automática
+          handleSpeak(accumulated, assistantMessageId);
+        }
+      }));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsStreaming(false);
+      if (!isComparisonMode) nativeBridge.haptic('success');
+      else nativeBridge.haptic('medium');
+      
+      if (notifyOnComplete && Notification.permission === 'granted' && document.hidden) {
+        nativeBridge.notify("Marina IA", "Terminei de processar sua resposta!");
+      }
     }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'pt-BR';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(prev => prev ? `${prev} ${transcript}` : transcript);
-      setIsListening(false);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error', event.error);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.start();
   };
 
   const handleSpeak = (text: string, messageId: string) => {
     if (typeof window === 'undefined') return;
-
     if (isSpeaking === messageId) {
       window.speechSynthesis.cancel();
       setIsSpeaking(null);
       return;
     }
-
     window.speechSynthesis.cancel();
-
     const utterance = new SpeechSynthesisUtterance();
-    
-    // Filtra emojis e símbolos markdown
-    // Regex para emojis: combina uma vasta gama de caracteres unicode de emojis
     const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{3297}\u{3299}\u{303D}\u{00A9}\u{00AE}\u{2122}\u{23F3}]/gu;
-    const cleanText = text
-      .replace(emojiRegex, '')
-      .replace(/[\*\#\`]/g, '')
-      .trim();
-    
-    utterance.text = cleanText;
+    utterance.text = text.replace(emojiRegex, '').replace(/[\*\#\`]/g, '').trim();
     utterance.lang = 'pt-BR';
     
-    // Aplicar voz selecionada
+    const voices = window.speechSynthesis.getVoices();
     if (selectedVoiceURI) {
-      const voice = availableVoices.find(v => v.voiceURI === selectedVoiceURI);
+      const voice = voices.find(v => v.voiceURI === selectedVoiceURI);
       if (voice) utterance.voice = voice;
-    }
+    } else {
+      // Fallback Inteligente: procura vozes femininas conhecidas em português
+      const femaleNames = ['maria', 'heloisa', 'vitoria', 'luciana', 'google português do brasil', 'francisca'];
+      const ptVoices = voices.filter(v => v.lang.includes('pt'));
+      
+      const bestVoice = ptVoices.find(v => 
+        femaleNames.some(name => v.name.toLowerCase().includes(name))
+      ) || ptVoices[0];
 
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+      if (bestVoice) utterance.voice = bestVoice;
+    }
 
     utterance.onstart = () => setIsSpeaking(messageId);
     utterance.onend = () => setIsSpeaking(null);
     utterance.onerror = () => setIsSpeaking(null);
-
     window.speechSynthesis.speak(utterance);
+  };
+
+  const extractFactsFromConversation = async (userMsg: string, aiMsg: string) => {
+    if (!apiKey) return;
+    try {
+      const extractPrompt = `Abaixo está uma interação entre um usuário e uma IA. 
+Extraia fatos novos e relevantes sobre o usuário (preferências, profissão, gostos, planos, pets, etc) em frases curtas e objetivas.
+Se não houver nada de novo ou relevante, responda apenas "NONE".
+Retorne apenas os fatos, um por linha.
+
+Usuário: ${userMsg}
+Marina: ${aiMsg}`;
+
+      let result = "";
+      await chatWithOpenRouter(apiKey, 'google/gemini-flash-1.5-8b', [{ role: 'user', content: extractPrompt }], (chunk) => {
+        result += chunk;
+      });
+
+      if (result.trim() && result.toUpperCase() !== "NONE") {
+        const lines = result.split('\n').filter(l => l.trim().length > 5);
+        lines.forEach(line => memoryService.addFact(line.trim()));
+        setFacts(memoryService.loadFacts());
+      }
+    } catch (e) {
+      console.error("Erro ao extrair fatos:", e);
+    }
+  };
+
+  const handleDeleteFact = (factId: string) => {
+    memoryService.deleteFact(factId);
+    setFacts(memoryService.loadFacts());
+  };
+
+  const handleSaveTemplate = (title: string, content: string) => {
+    const newTemplate: PromptTemplate = {
+      id: Date.now().toString(),
+      title,
+      content
+    };
+    const updated = [newTemplate, ...templates];
+    setTemplates(updated);
+    storageService.saveTemplates(updated);
+  };
+
+  const handleDeleteTemplate = (id: string) => {
+    const updated = templates.filter(t => t.id !== id);
+    setTemplates(updated);
+    storageService.saveTemplates(updated);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsStreaming(true);
+      await ragService.indexFile(file);
+      setIndexedFiles([...ragService.getDocs()]);
+      nativeBridge.notify("Marina IA", `Documento "${file.name}" indexado com sucesso!`);
+      nativeBridge.haptic('success');
+    } catch (error) {
+      console.error("Erro ao indexar arquivo:", error);
+      alert("Erro ao ler arquivo. Verifique se é um PDF ou texto válido.");
+    } finally {
+      setIsStreaming(false);
+    }
+  };
+
+  const handleRemoveDoc = (id: string) => {
+    ragService.removeDoc(id);
+    setIndexedFiles([...ragService.getDocs()]);
+  };
+
+  const handleCameraClick = async () => {
+    try {
+      const image = await nativeBridge.openCamera();
+      if (image) {
+        setAttachedImage(image);
+        nativeBridge.haptic('success');
+      }
+    } catch (error) {
+      console.error("Erro ao abrir câmera:", error);
+    }
   };
 
   const handleExportPDF = async () => {
     if (!currentSession) return;
     const element = document.getElementById('chat-history');
     if (!element) return;
-
     try {
-      const canvas = await html2canvas(element, {
-        backgroundColor: '#131314',
-        scale: 2
-      });
+      const canvas = await html2canvas(element, { backgroundColor: '#131314', scale: 2 });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgProps = pdf.getImageProperties(imgData);
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Marina_Chat_${currentSession.title.replace(/\s+/g, '_')}.pdf`);
     } catch (err) {
-      console.error("Export PDF error:", err);
       alert("Erro ao exportar PDF.");
     }
   };
 
   const handleExportTXT = () => {
     if (!currentSession) return;
-    const content = currentSession.messages
-      .map(m => `${m.role === 'user' ? 'Você' : 'Marina'} (${new Date(m.timestamp).toLocaleString()}):\n${m.content}\n\n`)
-      .join('---\n\n');
-    
+    const content = currentSession.messages.map(m => `${m.role === 'user' ? 'Você' : 'Marina'}:\n${m.content}\n\n`).join('---\n\n');
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = `Marina_Chat_${currentSession.title.replace(/\s+/g, '_')}.txt`;
     link.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleClearAllData = () => {
-    if (confirm("VOCÊ TEM CERTEZA? Isso apagará todas as conversas e configurações localmente. Esta ação não pode ser desfeita e os dados NÃO estão na nuvem.")) {
+    if (confirm("VOCÊ TEM CERTEZA? Isso apagará tudo localmente.")) {
       localStorage.clear();
       window.location.reload();
     }
   };
 
-  // Componente para renderizar gráficos se o texto contiver dados JSON de exemplo
+  const handleToggleNotifications = async () => {
+    if (typeof Notification === 'undefined') return;
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+  };
+
+  const handleAddModel = () => {
+    if (!newModelId.trim() || !newModelName.trim()) return;
+    setAvailableModels([...availableModels, { id: newModelId, name: newModelName }]);
+    setNewModelId(''); setNewModelName('');
+  };
+
+  const handleRemoveModel = (id: string) => {
+    if (DEFAULT_MODELS.some(m => m.id === id)) return;
+    setAvailableModels(availableModels.filter(m => m.id !== id));
+  };
+
+  const confirmCreateFolder = () => {
+    if (newFolderName.trim()) {
+      setFolders([...folders, { id: Date.now().toString(), name: newFolderName.trim(), isExpanded: true }]);
+    }
+    setIsCreatingFolder(false); setNewFolderName('');
+  };
+
+  const handleMoveToFolder = (sessionId: string, folderId: string | undefined) => {
+    setSessions(sessions.map(s => s.id === sessionId ? { ...s, folderId } : s));
+  };
+
+  const handleDeleteSession = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (deletingSessionId === id) {
+      setSessions(sessions.filter(s => s.id !== id));
+      if (currentSessionId === id) setCurrentSessionId(null);
+      setDeletingSessionId(null);
+    } else {
+      setDeletingSessionId(id);
+      setTimeout(() => setDeletingSessionId(prev => prev === id ? null : prev), 3000);
+    }
+  };
+
+  const handleMicClick = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    if (isListening) { setIsListening(false); return; }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.onstart = () => {
+      setIsListening(true);
+      setInput(''); // Limpa o que tinha antes
+    };
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setIsListening(false);
+      // O envio será processado pelo useEffect ou manualmente se preferir
+      // Mas para garantir o fluxo "mãos livres", vamos disparar o envio aqui
+      setTimeout(() => handleSendMessage(), 100); 
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognition.start();
+  };
+
+  const toggleComparisonModel = (modelId: string) => {
+    setComparisonModelIds(prev => prev.includes(modelId) ? prev.filter(id => id !== modelId) : prev.length < 3 ? [...prev, modelId] : prev);
+  };
+
   const ChartRenderer = ({ content }: { content: string }) => {
     try {
-      // Procura por blocos de código que pareçam dados de gráfico
-      // Exemplo: ```chart-bar [{"label": "A", "value": 10}] ```
       const match = content.match(/```(chart-bar|chart-line|chart-pie)\s*([\s\S]*?)\s*```/);
       if (!match) return null;
-
       const type = match[1];
       const data = JSON.parse(match[2]);
-
       return (
         <div className="my-4 h-64 w-full bg-[#1e1f20] p-4 rounded-2xl border border-[#444746] overflow-hidden">
           <ResponsiveContainer width="100%" height="100%">
@@ -378,1136 +594,208 @@ export default function App() {
           </ResponsiveContainer>
         </div>
       );
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   };
 
-  const handleToggleNotifications = async () => {
-    if (typeof Notification === 'undefined') {
-      alert("Seu navegador não suporta notificações.");
-      return;
-    }
-
-    // Detect if we are in an iframe
-    const isInIframe = window.self !== window.top;
-    if (isInIframe && Notification.permission === 'default') {
-      alert("Para ativar notificações, abra o aplicativo em uma nova aba (ícone no topo direito) devido às restrições de segurança do navegador.");
-      return;
-    }
-
-    if (Notification.permission === 'denied') {
-      alert("As notificações foram bloqueadas no seu navegador. Por favor, ative-as nas configurações do site (ícone de cadeado na barra de endereços).");
-      return;
-    }
-
-    const permission = await Notification.requestPermission();
-    setNotificationPermission(permission);
-
-    if (permission === 'granted') {
-      new Notification("Marina IA", {
-        body: "Notificações ativadas com sucesso!",
-        icon: MARINA_AVATAR
-      });
-    }
-  };
-
-  const handleSetDefaultModel = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDefaultModelId(id);
-    localStorage.setItem('marina_default_model', id);
-  };
-
-  useEffect(() => {
-    const loadVoices = () => {
-      const voices = window.speechSynthesis.getVoices();
-      // Filtrar apenas vozes em português para facilitar ou mostrar todas
-      setAvailableVoices(voices);
-    };
-
-    loadVoices();
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
-  }, []);
-
-  useEffect(() => {
-    // Iniciar com uma nova conversa se não houver nenhuma ou se a última tiver mensagens
-    if (sessions.length === 0) {
-      handleNewChat();
-    } else if (sessions[0].messages.length > 0) {
-      handleNewChat();
-    } else {
-      setCurrentSessionId(sessions[0].id);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [currentSession?.messages, isStreaming]);
-
-  const handleNewChat = (folderId?: string) => {
-    const newSession: ChatSession = {
-      id: Date.now().toString(),
-      title: 'Nova conversa',
-      messages: [],
-      modelId: activeModel,
-      folderId
-    };
-    setSessions([newSession, ...sessions]);
-    setCurrentSessionId(newSession.id);
-  };
-
-  const handleCreateFolder = () => {
-    setIsCreatingFolder(true);
-    setNewFolderName('');
-  };
-
-  const confirmCreateFolder = () => {
-    if (newFolderName.trim()) {
-      const newFolder: Folder = {
-        id: Date.now().toString(),
-        name: newFolderName.trim(),
-        isExpanded: true
-      };
-      setFolders([...folders, newFolder]);
-    }
-    setIsCreatingFolder(false);
-    setNewFolderName('');
-  };
-
-  const handleMoveToFolder = (sessionId: string, folderId: string | undefined) => {
-    setSessions(sessions.map(s => s.id === sessionId ? { ...s, folderId } : s));
-  };
-
-  const handleExportBackup = () => {
-    const data = {
-      sessions,
-      folders,
-      personas,
-      settings: {
-        theme,
-        apiKey,
-        activeModel,
-        soundEnabled,
-        notifyOnComplete
-      }
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `MarinaIA_Backup_${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-  };
-
-  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target?.result as string);
-        if (confirm("Isso irá substituir seus dados atuais. Continuar?")) {
-          if (data.sessions) setSessions(data.sessions);
-          if (data.folders) setFolders(data.folders);
-          if (data.personas) setPersonas(data.personas);
-          if (data.settings?.theme) setTheme(data.settings.theme);
-          if (data.settings?.apiKey) setApiKey(data.settings.apiKey);
-          alert("Backup restaurado com sucesso!");
-        }
-      } catch (err) {
-        alert("Erro ao ler arquivo de backup.");
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleAddPersona = () => {
-    const name = prompt("Nome da Persona (ex: Professor de Inglês):");
-    if (!name) return;
-    const promptText = prompt("Instrução do Sistema (como ela deve agir?):");
-    if (!promptText) return;
-    const newPersona: Persona = {
-      id: Date.now().toString(),
-      name,
-      systemPrompt: promptText
-    };
-    setPersonas([...personas, newPersona]);
-  };
-
-  const toggleFolder = (folderId: string) => {
-    setFolders(folders.map(f => f.id === folderId ? { ...f, isExpanded: !f.isExpanded } : f));
-  };
-
-  const handleDeleteFolder = (folderId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm("Deseja apagar esta pasta? As conversas dentro dela serão movidas para 'Geral'.")) {
-      setFolders(folders.filter(f => f.id !== folderId));
-      setSessions(sessions.map(s => s.id === folderId ? { ...s, folderId: undefined } : s));
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!input.trim() || !apiKey || isStreaming) return;
-
-    let sessionId = currentSessionId;
-    if (!sessionId) {
-      const newSession: ChatSession = {
-        id: Date.now().toString(),
-        title: input.slice(0, 30),
-        messages: [],
-        modelId: activeModel
-      };
-      setSessions([newSession, ...sessions]);
-      setCurrentSessionId(newSession.id);
-      sessionId = newSession.id;
-    }
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input,
-      timestamp: Date.now(),
-      image: attachedImage || undefined
-    };
-
-    setSessions(prev => prev.map(s => 
-      s.id === sessionId ? { ...s, messages: [...s.messages, userMessage] } : s
-    ));
-    setInput('');
-    setAttachedImage(null);
-    setIsStreaming(true);
-
-    const modelsToProcess = isComparisonMode && comparisonModelIds.length > 0 
-      ? comparisonModelIds 
-      : [isSearchEnabled ? 'perplexity/llama-3.1-sonar-small-128k-online' : activeModel];
-
-    const currentSessionObj = sessions.find(s => s.id === sessionId);
-    const selectedPersona = personas.find(p => p.id === selectedPersonaId);
-    const systemPrompt = selectedPersona ? { role: 'system', content: selectedPersona.systemPrompt } : null;
-
-    const baseHistory = [
-      ...(systemPrompt ? [systemPrompt] : []),
-      ...(currentSessionObj?.messages || []).map(m => ({ role: m.role, content: m.content })),
-      { role: userMessage.role, content: userMessage.content }
-    ];
-
-    try {
-      await Promise.all(modelsToProcess.map(async (modelId) => {
-        const modelName = availableModels.find(m => m.id === modelId)?.name || modelId.split('/').pop() || 'IA';
-        const assistantMessageId = (Date.now() + Math.random()).toString();
-        const assistantMessage: Message = {
-          id: assistantMessageId,
-          role: 'assistant',
-          content: '',
-          timestamp: Date.now(),
-          modelName: isComparisonMode ? modelName : undefined
-        };
-
-        setSessions(prev => prev.map(s => 
-          s.id === sessionId ? { ...s, messages: [...s.messages, assistantMessage] } : s
-        ));
-
-        let accumulated = "";
-        await chatWithOpenRouter(apiKey, modelId, baseHistory, (chunk) => {
-          accumulated += chunk;
-          setSessions(prev => prev.map(s => 
-            s.id === sessionId ? {
-              ...s,
-              messages: s.messages.map(m => 
-                m.id === assistantMessageId ? { ...m, content: accumulated } : m
-              )
-            } : s
-          ));
-        });
-      }));
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsStreaming(false);
-
-      // Notify user if enabled and tab is hidden
-      if (notifyOnComplete && Notification.permission === 'granted' && document.hidden) {
-        new Notification("Marina IA", {
-          body: "Terminei de processar sua resposta!",
-          icon: MARINA_AVATAR,
-          tag: 'response-ready'
-        });
-      }
-    }
-  };
-
+  // --- Render ---
   return (
-    <div className="flex h-screen bg-background text-[#e3e3e3] font-sans">
-      {/* Sidebar - Desktop/Mobile-Drawer */}
+    <div className="flex h-screen bg-background text-[#e3e3e3] font-sans overflow-hidden">
+      <Sidebar 
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        sessions={sessions}
+        currentSessionId={currentSessionId}
+        setCurrentSessionId={setCurrentSessionId}
+        folders={folders}
+        isCreatingFolder={isCreatingFolder}
+        setIsCreatingFolder={setIsCreatingFolder}
+        newFolderName={newFolderName}
+        setNewFolderName={setNewFolderName}
+        handleNewChat={handleNewChat}
+        confirmCreateFolder={confirmCreateFolder}
+        toggleFolder={(id) => setFolders(folders.map(f => f.id === id ? { ...f, isExpanded: !f.isExpanded } : f))}
+        handleDeleteFolder={(id, e) => {
+            e.stopPropagation();
+            if (confirm("Apagar pasta?")) setFolders(folders.filter(f => f.id !== id));
+        }}
+        handleMoveToFolder={handleMoveToFolder}
+        handleDeleteSession={handleDeleteSession}
+        deletingSessionId={deletingSessionId}
+        marinaAvatar={MARINA_AVATAR}
+      />
+
+      <ChatArea 
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        setShowSettings={setShowSettings}
+        currentSession={currentSession}
+        sessions={sessions}
+        isStreaming={isStreaming}
+        isSpeaking={isSpeaking}
+        handleSpeak={handleSpeak}
+        marinaAvatar={MARINA_AVATAR}
+        ChartRenderer={ChartRenderer}
+        scrollRef={scrollRef}
+        input={input}
+        setInput={setInput}
+        handleSendMessage={handleSendMessage}
+        handleMicClick={handleMicClick}
+        handleImageUpload={handleImageUpload}
+        attachedImage={attachedImage}
+        setAttachedImage={setAttachedImage}
+        isSearchEnabled={isSearchEnabled}
+        setIsSearchEnabled={setIsSearchEnabled}
+        isComparisonMode={isComparisonMode}
+        setIsComparisonMode={setIsComparisonMode}
+        comparisonModelIds={comparisonModelIds}
+        toggleComparisonModel={toggleComparisonModel}
+        availableModels={availableModels}
+        activeModel={activeModel}
+        setActiveModel={setActiveModel}
+        showModelList={showModelList}
+        setShowModelList={setShowModelList}
+        chatSearchTerm={chatSearchTerm}
+        setChatSearchTerm={setChatSearchTerm}
+        handleExportPDF={handleExportPDF}
+        handleExportTXT={handleExportTXT}
+        isListening={isListening}
+        selectedPersonaId={selectedPersonaId}
+        setSelectedPersonaId={setSelectedPersonaId}
+        personas={personas}
+        isPromptLibraryOpen={isPromptLibraryOpen}
+        setIsPromptLibraryOpen={setIsPromptLibraryOpen}
+        promptTemplates={templates}
+        handleSaveTemplate={handleSaveTemplate}
+        handleDeleteTemplate={handleDeleteTemplate}
+        PromptLibraryComponent={PromptLibrary}
+        totalCost={totalCost}
+        onPromoteArtifact={(content, title, type) => {
+          setActiveArtifact({
+            id: Date.now().toString(),
+            type: type || 'markdown',
+            content,
+            title: title || 'Documento'
+          });
+          setIsArtifactsOpen(true);
+        }}
+        indexedFiles={indexedFiles}
+        onFileUpload={handleFileUpload}
+        onRemoveDoc={handleRemoveDoc}
+        onCameraClick={handleCameraClick}
+        isVoiceModeOpen={isVoiceModeOpen}
+        setIsVoiceModeOpen={(open) => {
+          setIsVoiceModeOpen(open);
+          if (open) nativeBridge.haptic('selection');
+        }}
+      />
+
       <AnimatePresence>
-        {isSidebarOpen && (
-          <>
-            {/* Backdrop for mobile */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsSidebarOpen(false)}
-              className="fixed inset-0 bg-black/60 z-40 md:hidden"
-            />
-            <motion.aside 
-              initial={{ x: -280, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -280, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed md:relative inset-y-0 left-0 w-[280px] border-r border-border-dim flex flex-col bg-surface z-50 md:z-10"
-            >
-              <div className="p-6 border-b border-[#444746] flex items-center justify-between">
-                <div className="flex items-center gap-3 text-[#e3e3e3]">
-                  <div className="w-9 h-9 rounded-full overflow-hidden border border-primary/30 shadow-md">
-                    <img src={MARINA_AVATAR} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  </div>
-                  <h1 className="font-bold text-xl tracking-tighter">Marina</h1>
-                </div>
-                <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 hover:bg-[#333537] rounded-full">
-                  <Menu size={20} />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto px-4 py-2">
-                <button 
-                  onClick={() => handleNewChat()}
-                  className="flex items-center gap-3 px-5 py-3 bg-background hover:bg-[#333537] rounded-full transition-colors w-full mb-6 border border-border-dim shadow-sm"
-                >
-                  <Plus size={20} />
-                  <span className="text-sm font-medium">Nova conversa</span>
-                </button>
+        {showSettings && (
+          <SettingsModal 
+            setShowSettings={setShowSettings}
+            apiKey={apiKey}
+            setApiKey={setApiKey}
+            showApiKey={showApiKey}
+            setShowApiKey={setShowApiKey}
+            theme={theme}
+            setTheme={setTheme}
+            availableModels={availableModels}
+            newModelId={newModelId}
+            setNewModelId={setNewModelId}
+            newModelName={newModelName}
+            setNewModelName={setNewModelName}
+            handleAddModel={handleAddModel}
+            handleRemoveModel={handleRemoveModel}
+            defaultModelId={defaultModelId}
+            handleSetDefaultModel={(id, e) => {
+              e.stopPropagation();
+              setDefaultModelId(id);
+              localStorage.setItem('marina_default_model', id);
+            }}
+            handleExportBackup={() => {}} // TODO
+            handleImportBackup={() => {}} // TODO
+            handleClearAllData={handleClearAllData}
+            notificationPermission={notificationPermission}
+            handleToggleNotifications={handleToggleNotifications}
+            soundEnabled={soundEnabled}
+            setSoundEnabled={setSoundEnabled}
+            notifyOnComplete={notifyOnComplete}
+            setNotifyOnComplete={setNotifyOnComplete}
+            setShowEasDashboard={setShowEasDashboard}
+            biometricsEnabled={biometricsEnabled}
+            setBiometricsEnabled={setBiometricsEnabled}
+            facts={facts}
+            onDeleteFact={handleDeleteFact}
+            indexedFiles={indexedFiles}
+            onRemoveDoc={handleRemoveDoc}
+          />
+        )}
 
-                <div className="space-y-6">
-                  {/* Pastas */}
-                  <div>
-                    <div className="flex items-center justify-between px-2 mb-3">
-                      <p className="text-[0.65rem] font-bold text-[#9aa0a6] uppercase tracking-[0.2em]">Pastas</p>
-                      <button onClick={handleCreateFolder} className="p-1 hover:bg-[#333537] rounded-lg transition-colors text-[#9aa0a6] hover:text-white" title="Nova Pasta">
-                        <FolderPlus size={16} />
-                      </button>
-                    </div>
+        <VoiceMode 
+          isOpen={isVoiceModeOpen}
+          onClose={() => setIsVoiceModeOpen(false)}
+          isListening={isListening}
+          isSpeaking={!!isSpeaking}
+          transcript={input}
+          response={currentSession?.messages[currentSession.messages.length - 1]?.role === 'assistant' ? currentSession.messages[currentSession.messages.length - 1].content : ''}
+          onMicToggle={handleMicClick}
+        />
 
-                    {isCreatingFolder && (
-                      <div className="px-2 mb-3">
-                        <input
-                          autoFocus
-                          type="text"
-                          value={newFolderName}
-                          onChange={e => setNewFolderName(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') confirmCreateFolder();
-                            if (e.key === 'Escape') setIsCreatingFolder(false);
-                          }}
-                          onBlur={() => confirmCreateFolder()}
-                          placeholder="Nome da pasta..."
-                          className="w-full bg-[#131314] text-sm text-white px-3 py-2 rounded-lg border border-[#444746] focus:border-primary outline-none"
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="space-y-3">
-                      {folders.map(folder => (
-                        <div key={folder.id} className="space-y-1">
-                          <div 
-                            onClick={() => toggleFolder(folder.id)}
-                            className="flex items-center justify-between px-3 py-2 hover:bg-[#333537]/50 rounded-xl cursor-pointer group transition-colors"
-                          >
-                            <div className="flex items-center gap-3 text-[#9aa0a6] group-hover:text-white">
-                              <ChevronRight size={14} className={`transition-transform duration-200 ${folder.isExpanded ? 'rotate-90' : ''}`} />
-                              <FolderIcon size={18} className={folder.isExpanded ? "text-[#8ab4f8]" : ""} />
-                              <span className="text-sm font-medium">{folder.name}</span>
-                            </div>
-                            <button onClick={(e) => handleDeleteFolder(folder.id, e)} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-all">
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                          
-                          {folder.isExpanded && (
-                            <div className="ml-4 space-y-2 border-l border-[#444746] pl-3 py-1">
-                              {sessions.filter(s => s.folderId === folder.id).map(s => (
-                                <div key={s.id} className="relative group">
-                                  <button 
-                                    onClick={() => {
-                                      setCurrentSessionId(s.id);
-                                      if (window.innerWidth < 768) setIsSidebarOpen(false);
-                                    }}
-                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs transition-all text-left truncate pr-10 ${
-                                      currentSessionId === s.id 
-                                        ? 'bg-primary/20 text-primary shadow-md border border-primary/30' 
-                                        : 'hover:bg-primary/10 bg-background/30'
-                                    }`}
-                                  >
-                                    <History size={14} className="flex-shrink-0 opacity-70" />
-                                    <span className="truncate">{s.title || 'Nova conversa'}</span>
-                                  </button>
-                                  <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center bg-[#1e1f20]/90 rounded-lg p-0.5">
-                                    <select 
-                                      value={s.folderId || ''} 
-                                      onChange={(e) => handleMoveToFolder(s.id, e.target.value || undefined)}
-                                      className="bg-transparent border-none text-[10px] outline-none text-[#9aa0a6] w-6 cursor-pointer"
-                                      title="Mover para..."
-                                    >
-                                      <option value="">Geral</option>
-                                      {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                                    </select>
-                                    <button 
-                                      onClick={(e) => handleDeleteSession(s.id, e)}
-                                      className={`p-1.5 transition-all rounded-md ${deletingSessionId === s.id ? 'text-red-500' : 'text-[#9aa0a6] hover:text-red-400'}`}
-                                    >
-                                      <Trash2 size={12} />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                              {sessions.filter(s => s.folderId === folder.id).length === 0 && (
-                                <p className="text-[10px] text-[#444746] italic py-1 px-3">Vazio</p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+        <ArtifactsPanel 
+          isOpen={isArtifactsOpen}
+          onClose={() => setIsArtifactsOpen(false)}
+          artifact={activeArtifact}
+          onEdit={(content) => {
+            if (activeArtifact) {
+              setActiveArtifact({ ...activeArtifact, content });
+            }
+          }}
+        />
+      </AnimatePresence>
 
-                  {/* Geral */}
-                  <div>
-                    <p className="px-2 text-[0.65rem] font-bold text-[#9aa0a6] uppercase tracking-[0.2em] mb-3">Conversas</p>
-                    <div className="space-y-2">
-                      {sessions.filter(s => !s.folderId).map(s => (
-                        <div key={s.id} className="relative group">
-                          <button 
-                            onClick={() => {
-                              setCurrentSessionId(s.id);
-                              if (window.innerWidth < 768) setIsSidebarOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm transition-all text-left truncate pr-12 ${
-                              currentSessionId === s.id 
-                                ? 'bg-primary/20 text-primary shadow-lg shadow-primary/10 border border-primary/30' 
-                                : 'hover:bg-primary/10 bg-background/50 border border-border-dim/30'
-                            }`}
-                          >
-                            <History size={18} className="flex-shrink-0 opacity-70" />
-                            <span className="truncate font-medium">{s.title || 'Nova conversa'}</span>
-                          </button>
-                          <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1">
-                             <select 
-                                value={s.folderId || ''} 
-                                onChange={(e) => handleMoveToFolder(s.id, e.target.value || undefined)}
-                                className="bg-[#1e1f20] border border-[#444746] rounded-md text-[10px] outline-none text-[#9aa0a6] h-7 px-1 cursor-pointer"
-                                title="Mover para pasta"
-                              >
-                                <option value="">Mover</option>
-                                {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                              </select>
-                            <button 
-                              onClick={(e) => handleDeleteSession(s.id, e)}
-                              className={`p-2 transition-all rounded-xl border shadow-sm active:scale-95 ${
-                                deletingSessionId === s.id 
-                                  ? 'bg-red-500 text-white border-red-600 animate-pulse' 
-                                  : 'bg-[#1e1f20] text-[#9aa0a6] hover:text-red-400 border-[#444746]'
-                              }`}
-                              title={deletingSessionId === s.id ? "Confirmar exclusão" : "Apagar"}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Personas */}
-                  <div className="pt-4 border-t border-border-dim/30">
-                    <div className="flex items-center justify-between px-2 mb-3">
-                      <p className="text-[0.65rem] font-bold text-[#9aa0a6] uppercase tracking-[0.2em]">Personas</p>
-                      <button onClick={handleAddPersona} className="p-1 hover:bg-[#333537] rounded-lg transition-colors text-[#9aa0a6] hover:text-white" title="Nova Persona">
-                        <Plus size={16} />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                       {personas.map(p => (
-                         <button 
-                          key={p.id}
-                          onClick={() => setSelectedPersonaId(selectedPersonaId === p.id ? null : p.id)}
-                          className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
-                            selectedPersonaId === p.id ? 'border-primary bg-primary/20 shadow-sm' : 'border-border-dim hover:bg-primary/5'
-                          }`}
-                          title={p.systemPrompt}
-                         >
-                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
-                              {p.name.charAt(0)}
-                           </div>
-                           <span className="text-[10px] font-medium truncate w-full text-center">{p.name}</span>
-                         </button>
-                       ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            <div className="mt-auto p-4 border-t border-[#444746] space-y-2">
-              <button
-                onClick={() => setShowEasDashboard(true)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary/10 text-primary rounded-full text-sm transition-colors border border-primary/20"
-              >
-                <Smartphone size={18} />
-                <span className="font-medium">App Mobile / EAS</span>
-              </button>
-              <button 
-                onClick={() => setShowSettings(!showSettings)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#333537] rounded-full text-sm transition-colors"
-              >
-                <SettingsIcon size={18} />
-                <span>Configurações</span>
-              </button>
-              <div className="px-4 py-2 flex items-center gap-2 text-xs text-[#9aa0a6]">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span>Marina IA: Ativa</span>
-              </div>
+      <AnimatePresence>
+        {isLocked && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-background flex flex-col items-center justify-center space-y-8"
+          >
+            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <ShieldCheck size={48} />
             </div>
-          </motion.aside>
-        </>
-      )}
-    </AnimatePresence>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col relative overflow-hidden">
-        {/* Header */}
-        <header className="h-16 flex items-center justify-between px-6 z-20">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-[#333537] rounded-full transition-colors">
-              <Menu size={24} />
-            </button>
-            <div 
-              onClick={() => setShowModelList(!showModelList)}
-              className="flex items-center gap-2 bg-[#1e1f20] px-4 py-1.5 rounded-full border border-[#444746] cursor-pointer hover:bg-[#333537] relative"
-            >
-              <span className="text-sm font-medium">{availableModels.find(m => m.id === activeModel)?.name || 'Selecionar Modelo'}</span>
-              <ChevronDown size={16} className={`text-[#9aa0a6] transition-transform ${showModelList ? 'rotate-180' : ''}`} />
-              
-              <AnimatePresence>
-                {showModelList && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full left-0 mt-2 w-72 bg-surface border border-border-dim rounded-xl shadow-2xl z-50 overflow-hidden py-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="px-3 py-2 border-b border-[#444746] mb-1 flex items-center justify-between">
-                      <p className="text-[0.6rem] font-bold text-[#9aa0a6] uppercase tracking-widest">
-                        {isComparisonMode ? `Comparação (${comparisonModelIds.length}/3)` : 'Selecionar Modelo'}
-                      </p>
-                      {isComparisonMode && (
-                        <button onClick={() => setComparisonModelIds([])} className="text-[10px] text-red-400 hover:underline">Limpar</button>
-                      )}
-                    </div>
-                    <div className="px-3 py-2 border-b border-[#444746] mb-1">
-                      <input 
-                        autoFocus
-                        type="text"
-                        placeholder="Buscar modelo..."
-                        value={modelSearchQuery}
-                        onChange={(e) => setModelSearchQuery(e.target.value)}
-                        className="w-full bg-[#131314] border border-[#444746] rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary transition-colors"
-                      />
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      {availableModels
-                        .filter(m => 
-                          m.name.toLowerCase().includes(modelSearchQuery.toLowerCase()) || 
-                          m.id.toLowerCase().includes(modelSearchQuery.toLowerCase())
-                        )
-                        .map(m => (
-                          <div 
-                            key={m.id}
-                            className={`w-full flex items-center justify-between group/model ${
-                              (isComparisonMode ? comparisonModelIds.includes(m.id) : activeModel === m.id) 
-                                ? 'bg-primary/20' 
-                                : 'hover:bg-[#333537]'
-                            } transition-colors px-1`}
-                          >
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (isComparisonMode) {
-                                  toggleComparisonModel(m.id);
-                                } else {
-                                  setActiveModel(m.id);
-                                  setShowModelList(false);
-                                }
-                                setModelSearchQuery('');
-                              }}
-                              className={`flex-1 text-left px-3 py-3 text-sm flex items-center justify-between min-w-0 ${
-                                (isComparisonMode ? comparisonModelIds.includes(m.id) : activeModel === m.id) 
-                                  ? 'text-primary' 
-                                  : ''
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 truncate">
-                                {isComparisonMode && (
-                                  <div className={`w-3 h-3 rounded-full border border-primary/50 flex-shrink-0 ${comparisonModelIds.includes(m.id) ? 'bg-primary' : ''}`} />
-                                )}
-                                <span className="truncate">{m.name}</span>
-                              </div>
-                              {(m as any).isFree && (
-                                  <span className="bg-green-500/20 text-green-400 text-[0.6rem] px-1.5 py-0.5 rounded font-bold uppercase ml-2 flex-shrink-0">Grátis</span>
-                              )}
-                            </button>
-                            <button
-                              onClick={(e) => handleSetDefaultModel(m.id, e)}
-                              className={`p-2 transition-colors rounded-lg flex-shrink-0 mr-1 ${defaultModelId === m.id ? 'text-yellow-400 opacity-100' : 'text-[#9aa0a6] opacity-0 group-hover/model:opacity-100 hover:bg-white/10'}`}
-                              title={defaultModelId === m.id ? "Modelo padrão" : "Definir como padrão"}
-                            >
-                              <Star size={14} fill={defaultModelId === m.id ? "currentColor" : "none"} />
-                            </button>
-                          </div>
-                        ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">Marina IA Travada</h2>
+              <p className="text-[#9aa0a6] text-sm">Use sua digital para acessar suas conversas</p>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {currentSession && currentSession.messages.length > 0 && (
-              <div className="hidden md:flex items-center gap-2 mr-4 bg-[#1e1f20] rounded-full border border-[#444746] px-2 py-1">
-                <Search size={14} className="ml-2 text-[#9aa0a6]" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar na conversa..." 
-                  value={chatSearchTerm}
-                  onChange={(e) => setChatSearchTerm(e.target.value)}
-                  className="bg-transparent border-none outline-none text-xs py-1 w-32 focus:w-48 transition-all"
-                />
-              </div>
-            )}
             <button 
-              onClick={() => setIsComparisonMode(!isComparisonMode)}
-              className={`p-2 rounded-full transition-all ${
-                isComparisonMode ? 'bg-purple-500/20 text-purple-400' : 'text-[#9aa0a6] hover:bg-[#333537]'
-              }`}
-              title={isComparisonMode ? "Desativar Comparação" : "Ativar Comparação (Mult-Model)"}
+              onClick={handleAuthenticate}
+              className="px-8 py-3 bg-primary text-background font-bold rounded-2xl shadow-xl shadow-primary/20 hover:scale-105 transition-all"
             >
-              <Columns size={20} />
+              Autenticar Agora
             </button>
-            <button 
-              onClick={() => setIsSearchEnabled(!isSearchEnabled)}
-              className={`p-2 rounded-full transition-all ${
-                isSearchEnabled ? 'bg-blue-500/20 text-blue-400' : 'text-[#9aa0a6] hover:bg-[#333537]'
-              }`}
-              title={isSearchEnabled ? "Pesquisa Web Ativada" : "Ativar Pesquisa Web"}
-            >
-              <Globe size={20} className={isSearchEnabled ? 'animate-pulse' : ''} />
-            </button>
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-blue-500/30">
-               <img src={MARINA_AVATAR} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-            </div>
-          </div>
-        </header>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* Chat Area */}
-        <div 
-          ref={scrollRef}
-          id="chat-history"
-          className="flex-1 overflow-y-auto px-4 md:px-0 scroll-smooth"
-        >
-          {!currentSessionId || currentSession?.messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center p-8 text-center max-w-2xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="w-24 h-24 rounded-full overflow-hidden mb-6 ring-4 ring-[#8ab4f8]/20 shadow-2xl"
-              >
-                <img src={MARINA_AVATAR} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              </motion.div>
-              <motion.h1 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-5xl font-medium mb-8 bg-gradient-to-r from-[#4285f4] via-[#9b72cb] to-[#d96570] bg-clip-text text-transparent tracking-tight font-sans"
-              >
-                Olá, eu sou a Marina.
-              </motion.h1>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                {[
-                  "Explique como funciona o RAG no celular",
-                  "Crie um itinerário de 3 dias para Tokyo",
-                  "Como integrar TTS na Marina IA?",
-                  "Me ajude a planejar meu app"
-                ].map((prompt, i) => (
-                  <button 
-                    key={i}
-                    onClick={() => {
-                        setInput(prompt);
-                    }}
-                    className="p-4 bg-[#1e1f20] hover:bg-[#333537] rounded-2xl text-left text-sm border border-[#444746] transition-all hover:scale-[1.02]"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-3xl mx-auto py-10 space-y-12">
-              <div className="flex items-center justify-between border-b border-[#444746] pb-4 mb-2">
-                 <div className="flex items-center gap-2 text-[#9aa0a6]">
-                    <BarChart2 size={18} />
-                    <span className="text-xs font-bold uppercase tracking-widest">{currentSession.title}</span>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <button onClick={handleExportPDF} className="flex items-center gap-2 px-3 py-1.5 hover:bg-[#333537] rounded-full text-[0.65rem] font-bold uppercase bg-[#1e1f20] border border-[#444746] transition-colors">
-                      <Download size={14} /> PDF
-                    </button>
-                    <button onClick={handleExportTXT} className="flex items-center gap-2 px-3 py-1.5 hover:bg-[#333537] rounded-full text-[0.65rem] font-bold uppercase bg-[#1e1f20] border border-[#444746] transition-colors">
-                      <FileText size={14} /> TXT
-                    </button>
-                 </div>
-              </div>
-              {currentSession.messages
-                .filter(m => chatSearchTerm === '' || m.content.toLowerCase().includes(chatSearchTerm.toLowerCase()))
-                .reduce((acc: any[], m, i, arr) => {
-                  // Agrupamento para modo comparação de mensagens seguidas da assistente
-                  if (i > 0 && m.role === 'assistant' && arr[i-1].role === 'assistant' && isComparisonMode) {
-                    const lastGroup = acc[acc.length - 1];
-                    if (Array.isArray(lastGroup)) {
-                      lastGroup.push(m);
-                    } else {
-                      acc[acc.length - 1] = [lastGroup, m];
-                    }
-                  } else {
-                    acc.push(m);
-                  }
-                  return acc;
-                }, [])
-                .map((item, idx, filteredArr) => {
-                  const isGroup = Array.isArray(item);
-                  
-                  if (isGroup) {
-                    return (
-                      <div key={`group-${idx}`} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-                        {item.map((m: Message) => (
-                           <div key={m.id} className="bg-surface/50 border border-border-dim rounded-3xl p-6 flex flex-col h-full">
-                              <div className="flex items-center gap-2 mb-4 bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full w-fit">
-                                <Zap size={12} fill="currentColor" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest">{m.modelName || 'IA'}</span>
-                              </div>
-                              <div className="flex-1 text-[0.95rem] leading-relaxed text-[#e3e3e3] markdown-body">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                  {m.content}
-                                </ReactMarkdown>
-                                {isStreaming && idx === filteredArr.length - 1 && (
-                                  <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-middle"></span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border-dim/30">
-                                <button onClick={() => handleSpeak(m.content, m.id)} className={`p-1.5 rounded-lg transition-colors ${isSpeaking === m.id ? 'text-primary' : 'text-[#9aa0a6] hover:text-white'}`}>
-                                  {isSpeaking === m.id ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                                </button>
-                                <button onClick={() => navigator.clipboard.writeText(m.content)} className="p-1.5 text-[#9aa0a6] hover:text-white transition-colors">
-                                  <Copy size={16} />
-                                </button>
-                              </div>
-                           </div>
-                        ))}
-                      </div>
-                    );
-                  }
-
-                  const m = item as Message;
-                  return (
-                    <div key={m.id} className={`flex gap-6 ${m.role === 'user' ? 'justify-end' : ''}`}>
-                      {m.role === 'assistant' && (
-                        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 mt-1 ring-2 ring-[#444746]/50 shadow-lg">
-                          <img src={MARINA_AVATAR} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                        </div>
-                      )}
-                      <div className={`max-w-[85%] ${m.role === 'user' ? 'bg-[#333537] px-5 py-3 rounded-[2rem]' : ''}`}>
-                        {m.modelName && (
-                          <div className="flex items-center gap-1.5 mb-2 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full w-fit">
-                              <Zap size={10} fill="currentColor" />
-                              <span className="text-[10px] font-bold uppercase tracking-wider">{m.modelName}</span>
-                          </div>
-                        )}
-                        {m.image && (
-                          <div className="mb-4 rounded-2xl overflow-hidden border border-border-dim shadow-xl max-w-sm">
-                            <img src={m.image} className="w-full h-auto object-cover" alt="User upload" />
-                          </div>
-                        )}
-                        <div className="text-[1.05rem] leading-relaxed text-[#e3e3e3] markdown-body">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {m.content}
-                          </ReactMarkdown>
-                          <ChartRenderer content={m.content} />
-                          {isStreaming && idx === filteredArr.length - 1 && (
-                            <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-middle"></span>
-                          )}
-                        </div>
-                        {m.role === 'assistant' && !isStreaming && (
-                             <div className="flex items-center gap-4 mt-6 text-[#9aa0a6] border-t border-[#444746]/30 pt-4">
-                                <button 
-                                  onClick={() => handleSpeak(m.content, m.id)}
-                                  className={`p-2 rounded-full transition-all flex items-center gap-2 text-xs font-medium ${isSpeaking === m.id ? 'bg-blue-500/20 text-blue-400' : 'hover:bg-[#333537]'}`}
-                                >
-                                  {isSpeaking === m.id ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                                  {isSpeaking === m.id ? 'Parar' : 'Ouvir'}
-                                </button>
-                                <button 
-                                  onClick={() => navigator.clipboard.writeText(m.content)}
-                                  className="p-2 hover:bg-[#333537] rounded-full transition-colors flex items-center gap-2 text-xs font-medium"
-                                >
-                                  <Copy size={18} />
-                                  Copiar
-                                </button>
-                             </div>
-                        )}
-                      </div>
-                      {m.role === 'user' && (
-                        <div className="w-8 h-8 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center mt-1">
-                          <User size={18} className="text-white" />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-        </div>
-
-        {/* Input Area */}
-        <div className="p-4 md:p-6">
-          <div className="max-w-3xl mx-auto">
-            {attachedImage && (
-              <div className="mb-2 relative inline-block">
-                <img src={attachedImage} className="h-20 w-auto rounded-lg border border-primary/30 shadow-md" alt="Preview" />
-                <button 
-                  onClick={() => setAttachedImage(null)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            )}
-            <div className={`relative bg-[#1e1f20] border ${apiKey ? 'border-transparent' : 'border-red-500/50'} rounded-[2rem] p-2 focus-within:bg-[#333537] transition-all`}>
-              <div className="flex items-end gap-2 px-2 py-1">
-                <label className="p-3 hover:bg-[#444746] rounded-full text-[#e3e3e3] cursor-pointer">
-                  <Image size={22} />
-                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                </label>
-                <textarea 
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
-                  placeholder="Digite uma mensagem aqui..."
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-base py-3 px-2 resize-none max-h-48 scrollbar-none"
-                  rows={1}
-                />
-                <div className="flex items-center gap-1">
-                  <button 
-                    onClick={handleMicClick}
-                    className={`p-3 rounded-full transition-all ${
-                      isListening ? 'bg-red-500/20 text-red-500 animate-pulse' : 'text-[#e3e3e3] hover:bg-[#444746]'
-                    }`}
-                  >
-                    <Mic size={22} className={isListening ? 'scale-110' : ''} />
-                  </button>
-                  <button 
-                    onClick={handleSendMessage}
-                    disabled={(!input.trim() && !attachedImage) || isStreaming || !apiKey}
-                    className={`p-3 rounded-full transition-all ${
-                      (input.trim() || attachedImage) && !isStreaming && apiKey ? 'text-primary hover:bg-[#444746]' : 'text-[#444746]'
-                    }`}
-                  >
-                    <Send size={22} />
-                  </button>
-                </div>
-              </div>
-              {!apiKey && (
-                <div className="absolute -top-12 left-0 right-0 text-center">
-                   <p className="text-xs text-red-400 font-medium bg-red-900/20 py-1.5 rounded-full px-4 inline-block">
-                     Configure sua OpenRouter API Key nas definições para conversar.
-                   </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Settings Modal Overlay */}
-        <AnimatePresence>
-            {showSettings && (
-                <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                >
-                    <motion.div 
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.9, opacity: 0 }}
-                        className="bg-[#1e1f20] w-full max-w-2xl rounded-3xl p-8 border border-[#444746] max-h-[90vh] overflow-y-auto"
-                    >
-                        <div className="flex justify-between items-center mb-8">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full overflow-hidden border border-[#444746] shadow-lg">
-                                    <img src={MARINA_AVATAR} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                </div>
-                                <h2 className="text-2xl font-medium">Configurações</h2>
-                            </div>
-                            <button onClick={() => setShowSettings(false)} className="text-[#9aa0a6] hover:text-white transition-colors uppercase text-xs font-bold tracking-widest bg-[#333537]/50 px-3 py-1.5 rounded-full">Fechar</button>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-[#9aa0a6] mb-4">Autenticação</h3>
-                                    <label className="block text-xs font-medium text-[#9aa0a6] mb-2 uppercase">OpenRouter API Key</label>
-                                    <div className="relative">
-                                        <input 
-                                            type={showApiKey ? "text" : "password"}
-                                            value={apiKey}
-                                            onChange={(e) => setApiKey(e.target.value)}
-                                            placeholder="sk-or-v1-..."
-                                            className="w-full bg-[#131314] border border-[#444746] rounded-xl px-4 py-3 pr-24 focus:border-[#8ab4f8] focus:ring-1 focus:ring-[#8ab4f8] outline-none transition-all text-sm font-mono"
-                                        />
-                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                                            <button 
-                                                onClick={() => setShowApiKey(!showApiKey)}
-                                                className="p-2 text-[#9aa0a6] hover:text-white hover:bg-[#333537] rounded-lg transition-colors"
-                                            >
-                                                {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                            <button 
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(apiKey);
-                                                    alert("Chave API copiada!");
-                                                }}
-                                                className="p-2 text-[#9aa0a6] hover:text-white hover:bg-[#333537] rounded-lg transition-colors"
-                                            >
-                                                <Copy size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <p className="text-[0.65rem] text-[#9aa0a6] mt-2 flex items-center gap-1"><AlertCircle size={10} /> Salva localmente no seu navegador.</p>
-                                </div>
-
-                                <div>
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-[#9aa0a6] mb-4">Preferências</h3>
-                                    <label className="block text-xs font-medium text-[#9aa0a6] mb-2 uppercase">Modelo Chat Padrão</label>
-                                    <select 
-                                        value={activeModel}
-                                        onChange={(e) => setActiveModel(e.target.value)}
-                                        className="w-full bg-[#131314] border border-[#444746] rounded-xl px-4 py-3 outline-none focus:border-[#8ab4f8] text-sm"
-                                    >
-                                        {availableModels.map(m => (
-                                            <option key={m.id} value={m.id}>{m.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-[#9aa0a6] mb-4">Privacidade & Notificações</h3>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between bg-[#131314] border border-[#444746] rounded-xl px-4 py-3">
-                                            <div className="flex items-center gap-3">
-                                                {notificationPermission === 'granted' ? <Bell size={18} className="text-green-400" /> : <BellOff size={18} className="text-[#9aa0a6]" />}
-                                                <div>
-                                                    <p className="text-sm font-medium">Push Notificações</p>
-                                                    <p className="text-[0.65rem] text-[#9aa0a6]">
-                                                        {notificationPermission === 'granted' ? 'Ativadas' : notificationPermission === 'denied' ? 'Bloqueadas pelo navegador' : 'Desativadas'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <button 
-                                                onClick={handleToggleNotifications}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${notificationPermission === 'granted' ? 'bg-primary' : 'bg-border-dim/50'}`}
-                                            >
-                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notificationPermission === 'granted' ? 'translate-x-6' : 'translate-x-1'}`} />
-                                            </button>
-                                        </div>
-
-                                        <div className="flex items-center justify-between bg-[#131314] border border-[#444746] rounded-xl px-4 py-3">
-                                            <div className="flex items-center gap-3">
-                                                <History size={18} className={notifyOnComplete ? "text-primary" : "text-[#9aa0a6]"} />
-                                                <div>
-                                                    <p className="text-sm font-medium">Alertar Respostas</p>
-                                                    <p className="text-[0.65rem] text-[#9aa0a6]">Notificar quando a Marina terminar uma resposta longa</p>
-                                                </div>
-                                            </div>
-                                            <button 
-                                                onClick={() => setNotifyOnComplete(!notifyOnComplete)}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${notifyOnComplete ? 'bg-primary' : 'bg-border-dim/50'}`}
-                                            >
-                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifyOnComplete ? 'translate-x-6' : 'translate-x-1'}`} />
-                                            </button>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <p className="text-xs font-medium text-[#9aa0a6] uppercase tracking-wider">Voz do Sistema (PT-BR)</p>
-                                            <select 
-                                                value={selectedVoiceURI} 
-                                                onChange={(e) => {
-                                                    setSelectedVoiceURI(e.target.value);
-                                                    localStorage.setItem('marina_voice_uri', e.target.value);
-                                                }}
-                                                className="w-full bg-background border border-border-dim rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-colors"
-                                            >
-                                                <option value="">Padrão do Sistema</option>
-                                                {availableVoices
-                                                    .filter(v => v.lang.includes('pt'))
-                                                    .map(v => (
-                                                        <option key={v.voiceURI} value={v.voiceURI}>{v.name}</option>
-                                                    ))
-                                                }
-                                                <optgroup label="Outras Línguas">
-                                                    {availableVoices
-                                                        .filter(v => !v.lang.includes('pt'))
-                                                        .map(v => (
-                                                            <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>
-                                                        ))
-                                                    }
-                                                </optgroup>
-                                            </select>
-                                        </div>
-
-                                        <div className="pt-6 border-t border-[#444746]">
-                                            <h3 className="text-sm font-bold uppercase tracking-widest text-[#9aa0a6] mb-4 flex items-center gap-2">
-                                                <Palette size={18} className="text-pink-400" />
-                                                Temas Personalizados
-                                            </h3>
-                                            <div className="grid grid-cols-3 gap-2 mb-6">
-                                                {[
-                                                    { id: 'default', name: 'Midnight', color: '#8ab4f8', bg: '#131314' },
-                                                    { id: 'emerald', name: 'Esmeralda', color: '#10b981', bg: '#061a15' },
-                                                    { id: 'cyberpunk', name: 'Cyber', color: '#f0abfc', bg: '#0d0d0d' },
-                                                    { id: 'ocean', name: 'Oceano', color: '#64ffda', bg: '#0a192f' },
-                                                    { id: 'sunset', name: 'Pôr do Sol', color: '#fb923c', bg: '#1a0f0f' },
-                                                    { id: 'lavender', name: 'Lavanda', color: '#c084fc', bg: '#121019' },
-                                                ].map(t => (
-                                                    <button
-                                                        key={t.id}
-                                                        onClick={() => setTheme(t.id)}
-                                                        className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all ${
-                                                            theme === t.id ? 'border-primary bg-surface' : 'border-border-dim hover:bg-surface/50'
-                                                        }`}
-                                                    >
-                                                        <div 
-                                                            className="w-full h-8 rounded-lg shadow-inner"
-                                                            style={{ backgroundColor: t.bg, border: `2px solid ${t.color}` }}
-                                                        />
-                                                        <span className="text-[0.6rem] font-bold uppercase tracking-tighter truncate w-full text-center">{t.name}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-6 border-t border-[#444746]">
-                                            <h3 className="text-sm font-bold uppercase tracking-widest text-[#9aa0a6] mb-4 flex items-center gap-2">
-                                                <ShieldCheck size={18} className="text-blue-400" />
-                                                Segurança & Backup Local
-                                            </h3>
-                                            <p className="text-xs text-[#9aa0a6] mb-4 leading-relaxed">
-                                                Conversas salvas apenas aqui. Use o backup para mover entre aparelhos sem nuvem.
-                                            </p>
-                                            <div className="grid grid-cols-2 gap-2 mb-4">
-                                                <button 
-                                                    onClick={handleExportBackup}
-                                                    className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-xl text-[10px] font-bold uppercase transition-all"
-                                                >
-                                                    <Download size={14} /> Exportar
-                                                </button>
-                                                <label className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-[10px] font-bold uppercase transition-all cursor-pointer">
-                                                    <Share2 size={14} /> Importar
-                                                    <input type="file" accept=".json" onChange={handleImportBackup} className="hidden" />
-                                                </label>
-                                            </div>
-                                            <button 
-                                                onClick={handleClearAllData}
-                                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 rounded-xl text-xs font-bold uppercase transition-all"
-                                            >
-                                                <Trash2 size={16} />
-                                                Apagar Tudo Permanentemente
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="text-sm font-bold uppercase tracking-widest text-[#9aa0a6] mb-4">Gerenciar Modelos</h3>
-                                    
-                                    <div className="bg-background border border-border-dim rounded-2xl p-4 mb-4">
-                                        <p className="text-xs font-medium mb-3 uppercase tracking-wider">Adicionar Novo</p>
-                                        <input 
-                                            placeholder="ID do Modelo (ex: openai/gpt-4)"
-                                            value={newModelId}
-                                            onChange={(e) => setNewModelId(e.target.value)}
-                                            className="w-full bg-surface border border-border-dim rounded-lg px-3 py-2 text-xs mb-2 outline-none"
-                                        />
-                                        <input 
-                                            placeholder="Nome amigável"
-                                            value={newModelName}
-                                            onChange={(e) => setNewModelName(e.target.value)}
-                                            className="w-full bg-surface border border-border-dim rounded-lg px-3 py-2 text-xs mb-3 outline-none"
-                                        />
-                                        <button 
-                                            onClick={handleAddModel}
-                                            className="w-full bg-[#333537] hover:bg-[#444746] text-sm py-2 rounded-lg transition-colors border border-dashed border-[#444746]"
-                                        >
-                                            Vincular Modelo
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-thin">
-                                        {availableModels.map(m => (
-                                            <div key={m.id} className="flex items-center justify-between p-2 bg-[#131314] rounded-lg border border-[#444746]">
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="text-[0.7rem] font-bold text-white truncate">{m.name}</p>
-                                                        {(m as any).isFree && (
-                                                            <span className="bg-green-500/20 text-green-400 text-[0.5rem] px-1 py-0.2 rounded font-bold uppercase">Grátis</span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-[0.6rem] text-[#9aa0a6] truncate">{m.id}</p>
-                                                </div>
-                                                {!DEFAULT_MODELS.some(d => d.id === m.id) && (
-                                                    <button 
-                                                        onClick={() => handleRemoveModel(m.id)}
-                                                        className="p-1.5 hover:bg-red-500/20 text-red-400 rounded-md transition-colors"
-                                                    >
-                                                        <Trash2 size={12} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-10 flex gap-4">
-                             <button className="flex-1 bg-[#8ab4f8] text-[#131314] font-bold py-3 rounded-xl hover:bg-[#aecbfa] transition-all" onClick={() => setShowSettings(false)}>
-                                Aplicar e Fechar
-                            </button>
-                        </div>
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
-      </main>
-
-      {/* EAS Dashboard */}
       <AnimatePresence>
         {showEasDashboard && (
-          <EasDashboard onClose={() => setShowEasDashboard(false)} />
+          <div className="fixed inset-0 z-[110] bg-background">
+            <div className="p-4 border-b border-border-dim flex justify-between items-center">
+                <h2 className="font-bold">EAS Build Dashboard</h2>
+                <button onClick={() => setShowEasDashboard(false)} className="p-2 hover:bg-[#333537] rounded-lg">
+                    <X size={20} />
+                </button>
+            </div>
+            <div className="flex-1 overflow-auto">
+                <EasDashboard onClose={() => setShowEasDashboard(false)} />
+            </div>
+          </div>
         )}
       </AnimatePresence>
     </div>
   );
 }
 
+// Helper icons needed but not imported by components
+import { Zap, X, ShieldCheck } from 'lucide-react';
