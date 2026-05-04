@@ -29,6 +29,7 @@ src/
 │       ├── AcademyScreen.tsx    ← Tela principal / catálogo de cursos
 │       ├── CourseView.tsx       ← Visão do curso com módulos expansíveis
 │       ├── LessonView.tsx       ← Experiência da lição (step-by-step)
+│       ├── ModuleQuizView.tsx   ← Quiz de revisão ao final de cada módulo
 │       ├── ExerciseBlock.tsx    ← Renderiza exercícios (quiz + code challenge)
 │       ├── AiTutor.tsx          ← Mini-chat contextualizado com IA
 │       └── TerminalSimulator.tsx← Simulador de terminal PowerShell
@@ -154,6 +155,45 @@ export const module01: CourseModule = {
 ```
 
 **Pronto!** A lição aparece automaticamente no app.
+
+---
+
+### Quiz de Módulo (Portão entre Módulos)
+
+Cada módulo tem um **quiz de revisão** que aparece como a **última "aula"** do módulo (ex: se tem 3 lições, o quiz é a 1.4). O quiz:
+- **Bloqueia o próximo módulo** até o aluno ser aprovado (mín. 70%)
+- **Usa estrutura genérica** — só precisa dos dados no `module.quiz`
+- Exibe feedback visual (✅ correto / ❌ errado + explicação)
+- Permite retry infinito se reprovar
+
+Para adicionar um quiz, inclua o campo `quiz` no arquivo `moduleXX.ts`:
+
+```typescript
+export const module01: CourseModule = {
+  // ... lições ...
+  quiz: {
+    passingScore: 70,  // Nota mínima (0-100). Padrão: 70
+    questions: [
+      {
+        id: 'quiz-01-q1',
+        question: 'Qual é a pergunta?',
+        options: ['Opção A', 'Opção B', 'Opção C', 'Opção D'],
+        correctAnswer: 1,  // Índice 0-based (1 = Opção B)
+        explanation: 'Explicação da resposta correta'
+      },
+      // ... mais perguntas (recomendado: 5)
+    ]
+  }
+};
+```
+
+**Regras de bloqueio:**
+- Módulo 1 → sempre desbloqueado
+- Módulo 2 → desbloqueado quando quiz do Módulo 1 é aprovado
+- Módulo N → desbloqueado quando quiz do Módulo N-1 é aprovado
+- Se módulo não tem quiz, basta completar todas as lições para desbloquear o próximo
+
+**Convenções de ID:** `quiz-XX-qY` onde XX = módulo, Y = número da pergunta.
 
 ---
 

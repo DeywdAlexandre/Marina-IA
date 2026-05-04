@@ -35,6 +35,31 @@ export interface CourseModule {
   description: string;
   icon: string;
   lessons: Lesson[];
+  /** Quiz de revisão ao final do módulo (aparece como última "aula") */
+  quiz?: ModuleQuiz;
+}
+
+// ------------------------------------------------------------
+// Quiz de Módulo
+// ------------------------------------------------------------
+
+/** Quiz de revisão ao final de cada módulo */
+export interface ModuleQuiz {
+  /** Perguntas do quiz */
+  questions: ModuleQuizQuestion[];
+  /** Nota mínima para aprovação (0-100). Padrão: 70 */
+  passingScore?: number;
+}
+
+/** Pergunta do quiz de módulo */
+export interface ModuleQuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  /** Índice da resposta correta (0-based) */
+  correctAnswer: number;
+  /** Explicação exibida após a resposta */
+  explanation?: string;
 }
 
 /** Lição individual dentro de um módulo */
@@ -99,10 +124,21 @@ export interface CourseProgress {
   courseId: string;
   completedLessons: string[];
   exerciseResults: Record<string, ExerciseResult>;
+  /** Resultados dos quizzes de módulo (chave = moduleId) */
+  quizResults?: Record<string, ModuleQuizResult>;
   startedAt: number;
   lastAccessedAt: number;
   currentModuleId?: string;
   currentLessonId?: string;
+}
+
+/** Resultado de um quiz de módulo */
+export interface ModuleQuizResult {
+  moduleId: string;
+  score: number;      // 0-100
+  passed: boolean;
+  answers: number[];  // Índices das respostas do aluno
+  timestamp: number;
 }
 
 /** Resultado de um exercício individual */

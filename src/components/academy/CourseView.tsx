@@ -8,10 +8,13 @@ import {
   PlayCircle,
   Clock,
   BookOpen,
-  Trophy
+  Trophy,
+  Lock,
+  ScrollText
 } from 'lucide-react';
-import { Course, CourseModule, CourseProgress, Lesson } from '../../types/academy';
+import { Course, CourseModule, CourseProgress, Lesson, ModuleQuizResult } from '../../types/academy';
 import LessonView from './LessonView';
+import ModuleQuizView from './ModuleQuizView';
 
 interface CourseViewProps {
   course: Course;
@@ -32,24 +35,51 @@ const CourseView: React.FC<CourseViewProps> = ({
 }) => {
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(course.modules[0]?.id || null);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const [activeQuizModuleId, setActiveQuizModuleId] = useState<string | null>(null);
 
   const isLessonCompleted = (lessonId: string) => progress?.completedLessons.includes(lessonId) ?? false;
+
+  const isModuleQuizPassed = (moduleId: string) => {
+    return progress?.quizResults?.[moduleId]?.passed ?? false;
+  };
+
+  const getModuleQuizResult = (moduleId: string): ModuleQuizResult | undefined => {
+    return progress?.quizResults?.[moduleId];
+  };
+
+  /** Verifica se um módulo está desbloqueado.
+   * Módulo 0 sempre está. Demais exigem quiz aprovado no módulo anterior. */
+  const isModuleUnlocked = (moduleIndex: number): boolean => {
+    if (moduleIndex === 0) return true;
+    const prevModule = course.modules[moduleIndex - 1];
+    // Se o módulo anterior não tem quiz, basta ter completado todas as lições
+    if (!prevModule.quiz) {
+      return prevModule.lessons.every(l => isLessonCompleted(l.id));
+    }
+    return isModuleQuizPassed(prevModule.id);
+  };
 
   const getModuleCompletedCount = (mod: CourseModule) => {
     if (!progress) return 0;
     return mod.lessons.filter(l => progress.completedLessons.includes(l.id)).length;
   };
 
-  const getModuleStatus = (mod: CourseModule): 'completed' | 'in_progress' | 'not_started' => {
-    const completed = getModuleCompletedCount(mod);
-    if (completed === mod.lessons.length) return 'completed';
-    if (completed > 0) return 'in_progress';
+  /** Status do módulo considerando quiz */
+  const getModuleStatus = (mod: CourseModule, moduleIndex: number): 'locked' | 'completed' | 'in_progress' | 'not_started' => {
+    if (!isModuleUnlocked(moduleIndex)) return 'locked';
+    const completedCount = getModuleCompletedCount(mod);
+    const allLessonsDone = completedCount === mod.lessons.length;
+    const quizPassed = mod.quiz ? isModuleQuizPassed(mod.id) : true;
+    if (allLessonsDone && quizPassed) return 'completed';
+    if (completedCount > 0) return 'in_progress';
     return 'not_started';
   };
 
-  const totalLessons = course.modules.reduce((s, m) => s + m.lessons.length, 0);
-  const completedLessons = progress?.completedLessons.length || 0;
-  const percent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+  /** Contagem total considerando quizzes */
+  const totalItems = course.modules.reduce((s, m) => s + m.lessons.length + (m.quiz ? 1 : 0), 0);
+  const completedItems = (progress?.completedLessons.length || 0) +
+    course.modules.filter(m => m.quiz && isModuleQuizPassed(m.id)).length;
+  const percent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
   const handleCompleteLesson = (lessonId: string) => {
     const now = Date.now();
@@ -66,6 +96,7 @@ const CourseView: React.FC<CourseViewProps> = ({
           courseId: course.id,
           completedLessons: [lessonId],
           exerciseResults: {},
+          quizResults: {},
           startedAt: now,
           lastAccessedAt: now,
           currentLessonId: lessonId
@@ -77,7 +108,7 @@ const CourseView: React.FC<CourseViewProps> = ({
     const now = Date.now();
     const prev = progress?.exerciseResults[exerciseId];
     const updated: CourseProgress = {
-      ...(progress || { courseId: course.id, completedLessons: [], exerciseResults: {}, startedAt: now, lastAccessedAt: now }),
+      ...(progress || { courseId: course.id, completedLessons: [], exerciseResults: {}, quizResults: {}, startedAt: now, lastAccessedAt: now }),
       exerciseResults: {
         ...(progress?.exerciseResults || {}),
         [exerciseId]: {
@@ -87,6 +118,19 @@ const CourseView: React.FC<CourseViewProps> = ({
           userAnswer: answer !== undefined ? answer : prev?.userAnswer,
           timestamp: now
         }
+      },
+      lastAccessedAt: now
+    };
+    onUpdateProgress(updated);
+  };
+
+  const handleSubmitQuiz = (result: ModuleQuizResult) => {
+    const now = Date.now();
+    const updated: CourseProgress = {
+      ...(progress || { courseId: course.id, completedLessons: [], exerciseResults: {}, quizResults: {}, startedAt: now, lastAccessedAt: now }),
+      quizResults: {
+        ...(progress?.quizResults || {}),
+        [result.moduleId]: result
       },
       lastAccessedAt: now
     };
@@ -105,6 +149,23 @@ const CourseView: React.FC<CourseViewProps> = ({
       moduleTitle: course.modules.find(m => m.lessons.some(l => l.id === lessonId))?.title || ''
     };
   };
+
+  // --- Quiz de módulo aberto ---
+  if (activeQuizModuleId) {
+    const modIdx = course.modules.findIndex(m => m.id === activeQuizModuleId);
+    const mod = course.modules[modIdx];
+    if (mod?.quiz) {
+      return (
+        <ModuleQuizView
+          module={mod}
+          moduleIndex={modIdx}
+          previousResult={getModuleQuizResult(mod.id)}
+          onSubmit={handleSubmitQuiz}
+          onBack={() => setActiveQuizModuleId(null)}
+        />
+      );
+    }
+  }
 
   // --- Lição aberta ---
   if (activeLessonId) {
@@ -170,12 +231,12 @@ const CourseView: React.FC<CourseViewProps> = ({
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="p-3 bg-surface rounded-xl border border-border-dim text-center">
               <BookOpen size={16} className="text-primary mx-auto mb-1" />
-              <p className="text-lg font-bold">{totalLessons}</p>
+              <p className="text-lg font-bold">{totalItems}</p>
               <p className="text-[10px] text-[#9aa0a6]">Lições</p>
             </div>
             <div className="p-3 bg-surface rounded-xl border border-border-dim text-center">
               <CheckCircle2 size={16} className="text-green-400 mx-auto mb-1" />
-              <p className="text-lg font-bold">{completedLessons}</p>
+              <p className="text-lg font-bold">{completedItems}</p>
               <p className="text-[10px] text-[#9aa0a6]">Concluídas</p>
             </div>
             <div className="p-3 bg-surface rounded-xl border border-border-dim text-center">
@@ -187,38 +248,62 @@ const CourseView: React.FC<CourseViewProps> = ({
 
           {/* Module list */}
           {course.modules.map((mod, mi) => {
-            const status = getModuleStatus(mod);
+            const status = getModuleStatus(mod, mi);
             const isExpanded = expandedModuleId === mod.id;
             const completedCount = getModuleCompletedCount(mod);
+            const isLocked = status === 'locked';
+            const quizPassed = mod.quiz ? isModuleQuizPassed(mod.id) : false;
+            const allLessonsDone = completedCount === mod.lessons.length;
+            // Total de itens no módulo (lições + quiz)
+            const totalModItems = mod.lessons.length + (mod.quiz ? 1 : 0);
+            const completedModItems = completedCount + (quizPassed ? 1 : 0);
 
             return (
-              <div key={mod.id} className="bg-surface rounded-2xl border border-border-dim overflow-hidden">
+              <div
+                key={mod.id}
+                className={`bg-surface rounded-2xl border overflow-hidden transition-opacity ${
+                  isLocked ? 'border-border-dim/50 opacity-60' : 'border-border-dim'
+                }`}
+              >
                 {/* Module header */}
                 <button
-                  onClick={() => setExpandedModuleId(isExpanded ? null : mod.id)}
-                  className="w-full flex items-center gap-3 p-4 hover:bg-background/30 transition-colors text-left"
+                  onClick={() => {
+                    if (isLocked) return;
+                    setExpandedModuleId(isExpanded ? null : mod.id);
+                  }}
+                  className={`w-full flex items-center gap-3 p-4 transition-colors text-left ${
+                    isLocked ? 'cursor-not-allowed' : 'hover:bg-background/30'
+                  }`}
                 >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 ${
                     status === 'completed' ? 'bg-green-500/10 text-green-400' :
                     status === 'in_progress' ? 'bg-primary/10 text-primary' :
+                    isLocked ? 'bg-[#1a1a1a] text-[#444]' :
                     'bg-background text-[#9aa0a6]'
                   }`}>
-                    {status === 'completed' ? <CheckCircle2 size={16} /> : <span>{mod.icon}</span>}
+                    {isLocked ? <Lock size={14} /> :
+                     status === 'completed' ? <CheckCircle2 size={16} /> :
+                     <span>{mod.icon}</span>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-bold text-[#9aa0a6] uppercase">Módulo {mi + 1}</span>
                       {status === 'completed' && <Trophy size={10} className="text-yellow-500" />}
+                      {isLocked && <span className="text-[9px] text-[#555]">🔒 Complete o módulo anterior</span>}
                     </div>
-                    <h3 className="text-sm font-bold text-white line-clamp-1">{mod.title}</h3>
+                    <h3 className={`text-sm font-bold line-clamp-1 ${isLocked ? 'text-[#666]' : 'text-white'}`}>{mod.title}</h3>
                   </div>
-                  <span className="text-[10px] text-[#9aa0a6] font-mono shrink-0">{completedCount}/{mod.lessons.length}</span>
-                  <ChevronDown size={16} className={`text-[#9aa0a6] transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
+                  <span className="text-[10px] text-[#9aa0a6] font-mono shrink-0">
+                    {completedModItems}/{totalModItems}
+                  </span>
+                  {!isLocked && (
+                    <ChevronDown size={16} className={`text-[#9aa0a6] transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
+                  )}
                 </button>
 
-                {/* Lessons */}
+                {/* Lessons + Quiz */}
                 <AnimatePresence>
-                  {isExpanded && (
+                  {isExpanded && !isLocked && (
                     <motion.div
                       initial={{ height: 0 }}
                       animate={{ height: 'auto' }}
@@ -226,6 +311,7 @@ const CourseView: React.FC<CourseViewProps> = ({
                       className="overflow-hidden"
                     >
                       <div className="border-t border-border-dim/50">
+                        {/* Lessons */}
                         {mod.lessons.map((lesson, li) => {
                           const completed = isLessonCompleted(lesson.id);
                           return (
@@ -262,6 +348,56 @@ const CourseView: React.FC<CourseViewProps> = ({
                             </button>
                           );
                         })}
+
+                        {/* Quiz (última "aula" do módulo) */}
+                        {mod.quiz && (
+                          <button
+                            onClick={() => {
+                              if (!allLessonsDone) return;
+                              setActiveQuizModuleId(mod.id);
+                            }}
+                            disabled={!allLessonsDone}
+                            className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${
+                              allLessonsDone
+                                ? 'hover:bg-background/30'
+                                : 'opacity-50 cursor-not-allowed'
+                            }`}
+                          >
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                              quizPassed ? 'text-green-400' :
+                              !allLessonsDone ? 'text-[#333]' :
+                              'text-primary'
+                            }`}>
+                              {quizPassed ? <CheckCircle2 size={16} /> :
+                               !allLessonsDone ? <Lock size={14} /> :
+                               <ScrollText size={14} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs font-medium line-clamp-1 ${
+                                quizPassed ? 'text-[#9aa0a6]' :
+                                !allLessonsDone ? 'text-[#555]' :
+                                'text-primary font-bold'
+                              }`}>
+                                {mi + 1}.{mod.lessons.length + 1} — 📝 Quiz de Revisão
+                              </p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] text-[#9aa0a6]">
+                                  {mod.quiz.questions.length} perguntas • mín. {mod.quiz.passingScore ?? 70}%
+                                </span>
+                                {quizPassed && (
+                                  <span className="text-[10px] text-green-400 font-bold">
+                                    ✅ {progress?.quizResults?.[mod.id]?.score}% aprovado
+                                  </span>
+                                )}
+                                {!allLessonsDone && (
+                                  <span className="text-[10px] text-[#555]">
+                                    🔒 Complete as lições primeiro
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                   )}
