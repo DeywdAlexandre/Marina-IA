@@ -58,5 +58,24 @@ export const storageService = {
   loadTemplates() {
     const data = localStorage.getItem('prompt_templates');
     return data ? JSON.parse(data) : [];
+  },
+
+  // --- Marina Academy ---
+  saveAcademyProgress(progress: any[]) {
+    localStorage.setItem('marina_academy_progress', JSON.stringify(progress));
+  },
+
+  loadAcademyProgress(): any[] {
+    const data = localStorage.getItem('marina_academy_progress');
+    return data ? JSON.parse(data) : [];
+  },
+
+  saveTutorHistory(history: any[]) {
+    localStorage.setItem('marina_tutor_history', JSON.stringify(history));
+  },
+
+  loadTutorHistory(): any[] {
+    const data = localStorage.getItem('marina_tutor_history');
+    return data ? JSON.parse(data) : [];
   }
 };

@@ -21,7 +21,8 @@ import {
   DollarSign,
   FileText,
   Camera,
-  Headphones
+  Headphones,
+  GraduationCap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import MessageItem from './MessageItem';
@@ -79,6 +80,7 @@ interface ChatAreaProps {
   onCameraClick: () => void;
   setIsVoiceModeOpen: (open: boolean) => void;
   isVoiceModeOpen: boolean;
+  onOpenAcademy: () => void;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -132,7 +134,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onRemoveDoc,
   onCameraClick,
   setIsVoiceModeOpen,
-  isVoiceModeOpen
+  isVoiceModeOpen,
+  onOpenAcademy
 }) => {
   return (
     <main className="flex-1 flex flex-col min-w-0 relative bg-background">
@@ -201,6 +204,14 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
               className="bg-transparent border-none outline-none text-xs px-2 w-32 md:w-48 text-[#e3e3e3]"
             />
           </div>
+
+          <button 
+            onClick={onOpenAcademy}
+            className="p-2 rounded-full transition-all hover:bg-[#333537] text-[#9aa0a6] hover:text-primary"
+            title="Marina Academy"
+          >
+            <GraduationCap size={18} />
+          </button>
 
           <button 
             onClick={() => setIsVoiceModeOpen(!isVoiceModeOpen)}

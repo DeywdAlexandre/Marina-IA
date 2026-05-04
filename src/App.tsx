@@ -25,6 +25,7 @@ import VoiceMode from './components/VoiceMode';
 import EasDashboard from './EasDashboard';
 import { PromptLibrary } from './components/PromptLibrary';
 import { ArtifactsPanel, Artifact } from './components/ArtifactsPanel';
+import AcademyScreen from './components/academy/AcademyScreen';
 
 // Serviços e Tipos
 import { DEFAULT_MODELS, chatWithOpenRouter } from './services/aiService';
@@ -87,6 +88,7 @@ export default function App() {
   const [isComparisonMode, setIsComparisonMode] = useState(false);
   const [comparisonModelIds, setComparisonModelIds] = useState<string[]>([]);
   const [showEasDashboard, setShowEasDashboard] = useState(false);
+  const [showAcademy, setShowAcademy] = useState(false);
   const [newModelId, setNewModelId] = useState('');
   const [newModelName, setNewModelName] = useState('');
   const [isVoiceModeOpen, setIsVoiceModeOpen] = useState(false);
@@ -756,6 +758,7 @@ Marina: ${aiMsg}`;
           setIsVoiceModeOpen(open);
           if (open) nativeBridge.haptic('selection');
         }}
+        onOpenAcademy={() => setShowAcademy(true)}
       />
 
       <AnimatePresence>
@@ -860,6 +863,16 @@ Marina: ${aiMsg}`;
                 <EasDashboard onClose={() => setShowEasDashboard(false)} />
             </div>
           </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAcademy && (
+          <AcademyScreen
+            onClose={() => setShowAcademy(false)}
+            apiKey={apiKey}
+            activeModel={activeModel}
+          />
         )}
       </AnimatePresence>
     </div>

@@ -1,0 +1,33 @@
+import { Course } from '../../../types/academy';
+import { module01 } from './module01';
+import { module02 } from './module02';
+import { module03 } from './module03';
+
+/**
+ * Curso completo de PowerShell.
+ * Os módulos são importados conforme vão sendo criados.
+ * Módulos futuros serão adicionados aqui progressivamente.
+ */
+export const powershellCourse: Course = {
+  id: 'powershell-zero-avancado',
+  title: 'PowerShell: Do Zero ao Avançado',
+  description: 'Domine o PowerShell do absoluto zero até automação avançada. Aprenda a controlar seu computador como um profissional, automatizar tarefas repetitivas e até otimizar a performance da sua máquina.',
+  icon: '⚡',
+  color: '#0078D4', // Azul Microsoft
+  difficulty: 'beginner',
+  estimatedHours: 40,
+  tags: ['PowerShell', 'Automação', 'Windows', 'Scripting', 'Terminal'],
+  modules: [
+    module01,
+    module02,
+    module03,
+    // module04, — Navegação e Arquivos
+    // module05, — Variáveis e Tipos de Dados
+    // module06, — Controle de Fluxo
+    // module07, — Funções e Scripts
+    // module08, — Tratamento de Erros
+    // module09, — Automação Prática
+    // module10, — Projeto Final
+    // moduleBONUS — Limpeza e Otimização do PC
+  ]
+};
