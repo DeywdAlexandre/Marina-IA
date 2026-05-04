@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -92,6 +92,20 @@ const LessonView: React.FC<LessonViewProps> = ({
   const [copiedBlock, setCopiedBlock] = useState<string | null>(null);
   const [showTutor, setShowTutor] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Reseta estado quando a lição muda
+  useEffect(() => {
+    setCurrentStep(0);
+    setShowTerminal(false);
+    setShowTutor(false);
+    scrollRef.current?.scrollTo(0, 0);
+  }, [lesson.id]);
+
+  // Rola para o topo quando o passo muda
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [currentStep]);
 
   const step = steps[currentStep];
   const progress = ((currentStep + 1) / steps.length) * 100;
@@ -454,7 +468,7 @@ const LessonView: React.FC<LessonViewProps> = ({
           </div>
 
           {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto">
             <div className="max-w-3xl mx-auto px-4 md:px-8 py-6">
               <AnimatePresence mode="wait">
                 {renderStepContent()}
