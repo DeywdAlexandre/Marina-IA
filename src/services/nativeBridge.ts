@@ -22,13 +22,34 @@ export const nativeBridge = {
    * Schedules a native notification
    */
   scheduleReminder(title: string, body: string, trigger: string) {
-    if (!isNative) return;
-    (window as any).ReactNativeWebView.postMessage(JSON.stringify({
-      type: 'SCHEDULE_NOTIFY',
-      title,
-      body,
-      trigger
-    }));
+    if (isNative) {
+      (window as any).ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'SCHEDULE_NOTIFY',
+        title,
+        body,
+        trigger
+      }));
+    } else {
+      // Lógica para Navegador (PC)
+      const targetTime = new Date(trigger).getTime();
+      const now = new Date().getTime();
+      const delay = targetTime - now;
+
+      if (delay > 0) {
+        console.log(`[Marina] Lembrete agendado para daqui a ${Math.round(delay/1000/60)} minutos no navegador.`);
+        
+        setTimeout(() => {
+          if (Notification.permission === 'granted') {
+            new Notification(title, { body, icon: '/logo192.png' });
+            // Tenta tocar um som de alerta
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.play().catch(() => {});
+          } else {
+            alert(`⏰ LEMBRETE: ${title}\n${body}`);
+          }
+        }, delay);
+      }
+    }
   },
 
   /**
