@@ -58,6 +58,7 @@ export default function App() {
   const [input, setInput] = useState('');
   const [sessions, setSessions] = useState<ChatSession[]>(storageService.loadSessions());
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showModelList, setShowModelList] = useState(false);
@@ -391,6 +392,8 @@ Fuso: UTC-3.`;
     }
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance();
+    currentUtteranceRef.current = utterance;
+    
     const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{3297}\u{3299}\u{303D}\u{00A9}\u{00AE}\u{2122}\u{23F3}]/gu;
     let cleanText = text
       .replace(emojiRegex, '') // Remove emojis
@@ -403,7 +406,8 @@ Fuso: UTC-3.`;
       .replace(/[`#<>|\\\/]/g, '') // Remove símbolos estranhos
       .trim();
 
-    utterance.text = cleanText;
+    // Adiciona um buffer de silêncio no final para evitar cortes no Android
+    utterance.text = cleanText + " . . . ";
     utterance.lang = 'pt-BR';
     utterance.rate = 1.2; // Velocidade otimizada para 1.2x conforme solicitado
     
@@ -424,8 +428,14 @@ Fuso: UTC-3.`;
     }
 
     utterance.onstart = () => setIsSpeaking(messageId);
-    utterance.onend = () => setIsSpeaking(null);
-    utterance.onerror = () => setIsSpeaking(null);
+    utterance.onend = () => {
+      setIsSpeaking(null);
+      currentUtteranceRef.current = null;
+    };
+    utterance.onerror = () => {
+      setIsSpeaking(null);
+      currentUtteranceRef.current = null;
+    };
     window.speechSynthesis.speak(utterance);
   };
 

@@ -18,7 +18,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const TARGET_URL = 'https://ais-pre-lngglbm2tnxwhkvbnfttyw-22326498892.us-east1.run.app';
+const TARGET_URL = 'https://marina-ia.vercel.app/';
 
 export default function App() {
   const [error, setError] = useState(null);

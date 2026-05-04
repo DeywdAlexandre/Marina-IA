@@ -7,36 +7,37 @@
       "android"
     ],
     "orientation": "portrait",
-    "icon": "./public/icon.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./public/icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1e1f20"
+      "backgroundColor": "#131314"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./public/icon.png",
-        "backgroundColor": "#1e1f20"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#131314"
       },
-      "package": "com.deywd.mariai",
+      "package": "com.deywd.marinaia",
       "permissions": [
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "VIBRATE",
+        "NOTIFICATIONS"
       ]
     },
     "web": {
-      "favicon": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?q=80&w=192&h=192&auto=format&fit=crop"
+      "favicon": "./assets/icon.png"
     },
     "updates": {
-      "url": "https://u.expo.dev/67dd5514-4060-4cc9-8ac6-eaaa5ee21c16",
-      "fallbackToCacheTimeout": 0
+      "url": "https://u.expo.dev/67dd5514-4060-4cc9-8ac6-eaaa5ee21c16"
     },
     "runtimeVersion": {
       "policy": "appVersion"
@@ -49,6 +50,8 @@
     "plugins": [
       "expo-secure-store",
       "expo-notifications",
+      "expo-haptics",
+      "expo-updates",
       "expo-local-authentication",
       [
         "expo-image-picker",
