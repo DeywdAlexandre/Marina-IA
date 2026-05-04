@@ -277,7 +277,7 @@ Como você é frequentemente ouvida via áudio, siga estas regras de fala:
 1. Use frases CURTAS e diretas. Evite parágrafos densos.
 2. Use vírgulas e reticências (...) para criar pausas naturais onde uma pessoa respiraria.
 3. Use expressões de transição como "Olha,", "Então,", "Pois é," para soar mais humana.
-4. NUNCA use símbolos como asteriscos (*), hashtags (#) ou negritos na fala, pois o sintetizador de voz pode se confundir.
+4. ESTÉTICA VISUAL: No chat, use Markdown elegante (**negrito** em palavras-chave, listas estruturadas) para facilitar a leitura. Não se preocupe, o sistema filtrará os símbolos na hora de falar. Foque em um layout luxuoso e escaneável.
 
 Data/Hora Atual (Brasília): ${brTime}
 Fuso: UTC-3.`;
@@ -392,7 +392,18 @@ Fuso: UTC-3.`;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance();
     const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{3297}\u{3299}\u{303D}\u{00A9}\u{00AE}\u{2122}\u{23F3}]/gu;
-    utterance.text = text.replace(emojiRegex, '').replace(/[\*\#\`]/g, '').trim();
+    let cleanText = text
+      .replace(emojiRegex, '') // Remove emojis
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove negrito mas mantém o texto
+      .replace(/\*(.*?)\*/g, '$1') // Remove itálico mas mantém o texto
+      .replace(/#+\s/g, '') // Remove títulos
+      .replace(/`{1,3}[\s\S]*?`{1,3}/g, 'código omitido') // Oculta blocos de código na fala
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Mantém apenas o texto de links
+      .replace(/[\*\#-]\s/g, '. ') // Transforma listas em pausas (pontos)
+      .replace(/[`#<>|\\\/]/g, '') // Remove símbolos estranhos
+      .trim();
+
+    utterance.text = cleanText;
     utterance.lang = 'pt-BR';
     utterance.rate = 1.2; // Velocidade otimizada para 1.2x conforme solicitado
     
