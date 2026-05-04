@@ -195,6 +195,8 @@ export const module01: CourseModule = {
 
 **Convenções de ID:** `quiz-XX-qY` onde XX = módulo, Y = número da pergunta.
 
+> 💡 **DICA DE DESENVOLVEDOR:** Para testar os módulos durante a criação sem precisar passar por todos os quizzes, abra o arquivo `src/components/academy/CourseView.tsx` e altere a constante `DEV_DISABLE_LOCKS = true`. Lembre-se de voltar para `false` ao final!
+
 ---
 
 ### Cenário 2: Adicionar um novo MÓDULO a um curso existente

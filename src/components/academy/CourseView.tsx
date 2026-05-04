@@ -25,6 +25,8 @@ interface CourseViewProps {
   activeModel: string;
 }
 
+const DEV_DISABLE_LOCKS = true; // TODO: Mudar para false em produção
+
 const CourseView: React.FC<CourseViewProps> = ({
   course,
   progress,
@@ -40,6 +42,7 @@ const CourseView: React.FC<CourseViewProps> = ({
   const isLessonCompleted = (lessonId: string) => progress?.completedLessons.includes(lessonId) ?? false;
 
   const isModuleQuizPassed = (moduleId: string) => {
+    if (DEV_DISABLE_LOCKS) return true;
     return progress?.quizResults?.[moduleId]?.passed ?? false;
   };
 
@@ -50,6 +53,7 @@ const CourseView: React.FC<CourseViewProps> = ({
   /** Verifica se um módulo está desbloqueado.
    * Módulo 0 sempre está. Demais exigem quiz aprovado no módulo anterior. */
   const isModuleUnlocked = (moduleIndex: number): boolean => {
+    if (DEV_DISABLE_LOCKS) return true;
     if (moduleIndex === 0) return true;
     const prevModule = course.modules[moduleIndex - 1];
     // Se o módulo anterior não tem quiz, basta ter completado todas as lições
