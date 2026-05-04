@@ -245,7 +245,7 @@ export default function App() {
 
     const modelsToProcess = isComparisonMode && comparisonModelIds.length > 0 
       ? comparisonModelIds 
-      : [isSearchEnabled ? 'perplexity/llama-3.1-sonar-small-128k-online' : activeModel];
+      : [isSearchEnabled ? 'perplexity/sonar' : activeModel];
 
     const currentSessionObj = sessions.find(s => s.id === sessionId);
     const selectedPersona = personas.find(p => p.id === selectedPersonaId);
@@ -266,11 +266,20 @@ export default function App() {
       ? `${selectedPersona.prompt}${memoryContext}${ragContext}`
       : `Você é a Marina IA, uma assistente pessoal inteligente, prestativa e elegante. Você tem uma personalidade empática e profissional.${memoryContext}${ragContext}`;
 
-    const baseHistory = [
-      { role: 'system', content: systemPrompt },
-      ...(currentSessionObj?.messages || []).map(m => ({ role: m.role, content: m.content })),
-      { role: userMessage.role, content: userMessage.content }
-    ];
+      const baseHistory = [
+        { role: 'system' as const, content: systemPrompt },
+        ...(currentSessionObj?.messages || []).map(m => ({ 
+          role: m.role as any, 
+          content: isSearchEnabled ? (typeof m.content === 'string' ? m.content : 'Mensagem com imagem (não suportada em busca)') : m.content 
+        })),
+        { 
+          role: userMessage.role as any, 
+          content: isSearchEnabled ? userMessage.content : (attachedImage ? [
+            { type: 'text', text: userMessage.content },
+            { type: 'image_url', image_url: { url: attachedImage } }
+          ] : userMessage.content)
+        }
+      ];
 
     try {
       await Promise.all(modelsToProcess.map(async (modelId) => {
