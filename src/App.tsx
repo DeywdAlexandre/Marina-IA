@@ -262,9 +262,23 @@ export default function App() {
       ? `\n[CONHECIMENTO DOS DOCUMENTOS ANEXADOS]:\nUse as informações abaixo para responder se forem relevantes:\n${relevantDocs}`
       : "";
 
-    const systemPrompt = selectedPersona 
-      ? `${selectedPersona.prompt}${memoryContext}${ragContext}`
-      : `Você é a Marina IA, uma assistente pessoal inteligente, prestativa e elegante. Você tem uma personalidade empática e profissional.${memoryContext}${ragContext}`;
+      // Data e hora de Brasília em tempo real
+      const now = new Date();
+      const brTime = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      
+      const agentInstructions = `
+[IMPORTANT - AGENT CAPABILITIES]:
+Você pode agendar lembretes nativos no celular do usuário. 
+Sempre que o usuário pedir para ser lembrado de algo, você DEVE gerar sua resposta normalmente e, ao final, anexar EXATAMENTE este bloco:
+[REMINDER: {"title": "O que lembrar", "body": "Detalhes", "trigger": "ISO_TIMESTAMP"}]
+
+Data/Hora Atual (Brasília): ${brTime}
+Considere o fuso horário UTC-3 para calcular o "trigger" (formato ISO 8601).
+Exemplo: Se o usuário diz "me lembre em 10 min", calcule o horário exato e gere o bloco.`;
+
+      const systemPrompt = selectedPersona 
+        ? `${selectedPersona.prompt}${memoryContext}${ragContext}\n${agentInstructions}`
+        : `Você é a Marina IA, uma assistente pessoal inteligente e elegante.${memoryContext}${ragContext}\n${agentInstructions}`;
 
       const baseHistory = [
         { role: 'system' as const, content: systemPrompt },
@@ -327,8 +341,26 @@ export default function App() {
 
         if (accumulated) {
           extractFactsFromConversation(userMessage.content, accumulated);
-          // Dispara a fala automática
           handleSpeak(accumulated, assistantMessageId);
+
+          // Detecta e processa lembretes
+          const reminderMatch = accumulated.match(/\[REMINDER: (.*?)\]/);
+          if (reminderMatch) {
+            try {
+              const reminderData = JSON.parse(reminderMatch[1]);
+              nativeBridge.scheduleReminder(reminderData.title, reminderData.body, reminderData.trigger);
+              nativeBridge.haptic('success');
+              
+              // Limpa o comando técnico do texto visível para o usuário
+              const cleanText = accumulated.replace(/\[REMINDER: .*?\]/, '').trim();
+              setSessions(prev => prev.map(s => s.id === sessionId ? {
+                ...s,
+                messages: s.messages.map(m => m.id === assistantMessageId ? { ...m, content: cleanText } : m)
+              } : s));
+            } catch (e) {
+              console.error("Erro ao processar lembrete:", e);
+            }
+          }
         }
       }));
     } catch (error) {

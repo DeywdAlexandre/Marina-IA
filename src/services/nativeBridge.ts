@@ -19,6 +19,19 @@ export const nativeBridge = {
   },
 
   /**
+   * Schedules a native notification
+   */
+  scheduleReminder(title: string, body: string, trigger: string) {
+    if (!isNative) return;
+    (window as any).ReactNativeWebView.postMessage(JSON.stringify({
+      type: 'SCHEDULE_NOTIFY',
+      title,
+      body,
+      trigger
+    }));
+  },
+
+  /**
    * Requests biometric authentication
    */
   async authenticate(): Promise<boolean> {

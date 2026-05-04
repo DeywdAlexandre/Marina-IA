@@ -81,6 +81,22 @@ export default function App() {
           });
           break;
 
+        case 'SCHEDULE_NOTIFY':
+          const triggerDate = new Date(data.trigger);
+          if (isNaN(triggerDate.getTime())) return;
+          
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: data.title || "Lembrete da Marina",
+              body: data.body,
+              data: data.data || {},
+              sound: true,
+              priority: 'high'
+            },
+            trigger: triggerDate,
+          });
+          break;
+
         case 'SAVE_SECURE':
           await SecureStore.setItemAsync(data.key, data.value);
           break;
