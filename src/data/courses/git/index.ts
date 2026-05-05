@@ -19,6 +19,7 @@ export const gitCourse: Course = {
   description: 'Pare de fazer cópias das cópias. Domine a ferramenta mais importante do mercado de TI, resolva conflitos sem chorar e trabalhe em equipe usando repositórios na nuvem.',
   icon: '🐙',
   color: '#F05032', // Laranja clássico do Git
+  category: 'Sistemas e Terminal',
   difficulty: 'intermediate',
   estimatedHours: 11, // Aumentado por causa do bônus
   tags: ['Git', 'GitHub', 'Controle de Versão', 'Open Source', 'Programação'],

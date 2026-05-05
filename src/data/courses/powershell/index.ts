@@ -22,6 +22,7 @@ export const powershellCourse: Course = {
   description: 'Domine o PowerShell do absoluto zero até automação avançada. Aprenda a controlar seu computador como um profissional, automatizar tarefas repetitivas e até otimizar a performance da sua máquina.',
   icon: '⚡',
   color: '#0078D4', // Azul Microsoft
+  category: 'Sistemas e Terminal',
   difficulty: 'beginner',
   estimatedHours: 40,
   tags: ['PowerShell', 'Automação', 'Windows', 'Scripting', 'Terminal'],

@@ -9,11 +9,12 @@ import { module03 } from './module03';
  * ou qualquer outra automação avançada.
  */
 export const shellBasicoCourse: Course = {
-  id: 'shell-basico-unix',
-  title: 'Shell Básico: Introdução ao Terminal',
-  description: 'O curso de "esquenta" perfeito. Perca o medo da tela preta e aprenda os comandos universais (Bash/Zsh) usados por desenvolvedores em servidores Linux e Mac no mundo todo.',
-  icon: '🖳',
-  color: '#28A745', // Verde Terminal clássico
+  id: 'shell-basico',
+  title: 'Shell Linux: O Início da Jornada',
+  description: 'Aprenda a navegar e dominar o terminal Linux. Do ls ao rm -rf, entenda como falar com o sistema.',
+  icon: '🐧',
+  color: '#FCC624',
+  category: 'Sistemas e Terminal',
   difficulty: 'beginner',
   estimatedHours: 5,
   tags: ['Terminal', 'Linux', 'Bash', 'Zsh', 'Iniciante'],

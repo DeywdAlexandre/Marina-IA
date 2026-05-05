@@ -14,16 +14,19 @@ import {
   BookOpen,
   Terminal,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Code2
 } from 'lucide-react';
 import { Lesson, ExerciseResult } from '../../types/academy';
 import ExerciseBlock from './ExerciseBlock';
 import AiTutor from './AiTutor';
 import TerminalSimulator from './TerminalSimulator';
+import CodeSimulator from './CodeSimulator';
 
 interface LessonViewProps {
   lesson: Lesson;
   moduleTitle: string;
+  courseCategory: string;
   isCompleted: boolean;
   onComplete: () => void;
   onSaveExercise: (exerciseId: string, passed: boolean, answer?: string | number) => void;
@@ -55,6 +58,7 @@ function getSectionTitle(md: string): string {
 const LessonView: React.FC<LessonViewProps> = ({
   lesson,
   moduleTitle,
+  courseCategory,
   isCompleted,
   onComplete,
   onSaveExercise,
@@ -91,13 +95,13 @@ const LessonView: React.FC<LessonViewProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [copiedBlock, setCopiedBlock] = useState<string | null>(null);
   const [showTutor, setShowTutor] = useState(false);
-  const [showTerminal, setShowTerminal] = useState(false);
+  const [showSimulator, setShowSimulator] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Reseta estado quando a lição muda
   useEffect(() => {
     setCurrentStep(0);
-    setShowTerminal(false);
+    setShowSimulator(false);
     setShowTutor(false);
     scrollRef.current?.scrollTo(0, 0);
   }, [lesson.id]);
@@ -414,12 +418,14 @@ const LessonView: React.FC<LessonViewProps> = ({
               </span>
             )}
             <button
-              onClick={() => setShowTerminal(!showTerminal)}
-              className={`p-1.5 rounded-lg transition-all text-xs flex items-center gap-1.5 ${showTerminal ? 'bg-[#0078D4]/20 text-[#0078D4]' : 'hover:bg-[#333537] text-[#9aa0a6] hover:text-white'}`}
-              title="Abrir Terminal PowerShell"
+              onClick={() => setShowSimulator(!showSimulator)}
+              className={`p-1.5 rounded-lg transition-all text-xs flex items-center gap-1.5 ${showSimulator ? 'bg-primary/20 text-primary' : 'hover:bg-[#333537] text-[#9aa0a6] hover:text-white'}`}
+              title={courseCategory === 'Sistemas e Terminal' ? "Abrir Terminal PowerShell" : "Abrir Editor de Código"}
             >
-              <Terminal size={14} />
-              <span className="hidden sm:inline text-[10px] font-bold">Terminal</span>
+              {courseCategory === 'Sistemas e Terminal' ? <Terminal size={14} /> : <Code2 size={14} />}
+              <span className="hidden sm:inline text-[10px] font-bold">
+                {courseCategory === 'Sistemas e Terminal' ? 'Terminal' : 'Editor'}
+              </span>
             </button>
             <button
               onClick={() => setShowTutor(!showTutor)}
@@ -475,15 +481,23 @@ const LessonView: React.FC<LessonViewProps> = ({
               </AnimatePresence>
             </div>
 
-            {/* Terminal embarcado */}
+            {/* Simulador embarcado */}
             <AnimatePresence>
-              {showTerminal && (
+              {showSimulator && (
                 <div className="max-w-3xl mx-auto px-4 md:px-8 pb-6">
-                  <TerminalSimulator
-                    isOpen={showTerminal}
-                    onClose={() => setShowTerminal(false)}
-                    welcomeMessage="Pratique os comandos que aprendeu nesta lição!"
-                  />
+                  {courseCategory === 'Sistemas e Terminal' ? (
+                    <TerminalSimulator
+                      isOpen={showSimulator}
+                      onClose={() => setShowSimulator(false)}
+                      welcomeMessage="Pratique os comandos que aprendeu nesta lição!"
+                    />
+                  ) : (
+                    <div className="h-[450px]">
+                      <CodeSimulator 
+                        initialCode={lesson.content.codeExamples?.[0]?.code || '// Comece a programar aqui...\n'} 
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </AnimatePresence>

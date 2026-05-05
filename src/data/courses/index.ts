@@ -5,6 +5,7 @@ import { Course } from '../../types/academy';
 import { powershellCourse } from './powershell';
 import { shellBasicoCourse } from './shell-basico';
 import { gitCourse } from './git';
+import { logicaProgramacaoCourse } from './logica-programacao';
 
 /**
  * Lista de todos os cursos disponíveis na Academy.
@@ -14,6 +15,7 @@ export const allCourses: Course[] = [
   shellBasicoCourse,
   powershellCourse,
   gitCourse,
+  logicaProgramacaoCourse,
   
   // ==========================================
   // Cursos Em Breve
@@ -24,6 +26,7 @@ export const allCourses: Course[] = [
     description: 'Diagnostique a internet e entenda como computadores se comunicam.',
     icon: '🌐',
     color: '#00A4EF',
+    category: 'Sistemas e Terminal',
     difficulty: 'intermediate',
     estimatedHours: 6,
     modules: [],
@@ -36,6 +39,7 @@ export const allCourses: Course[] = [
     description: 'Aprofunde-se no Bash. Aprenda chmod, grep, pipes e automações.',
     icon: '🐧',
     color: '#FCC624',
+    category: 'Sistemas e Terminal',
     difficulty: 'advanced',
     estimatedHours: 12,
     modules: [],
@@ -48,6 +52,7 @@ export const allCourses: Course[] = [
     description: 'Crie e rode servidores virtuais em segundos usando containers.',
     icon: '🐳',
     color: '#2496ED',
+    category: 'Sistemas e Terminal',
     difficulty: 'advanced',
     estimatedHours: 15,
     modules: [],

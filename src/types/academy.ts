@@ -22,6 +22,7 @@ export interface Course {
   description: string;
   icon: string;
   color: string;
+  category: string; // Nova categoria para organização (ex: 'Sistemas', 'Programação')
   difficulty: Difficulty;
   estimatedHours: number;
   modules: CourseModule[];

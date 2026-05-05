@@ -179,6 +179,7 @@ const CourseView: React.FC<CourseViewProps> = ({
         <LessonView
           lesson={ctx.lesson}
           moduleTitle={ctx.moduleTitle}
+          courseCategory={course.category}
           isCompleted={isLessonCompleted(ctx.lesson.id)}
           onComplete={() => handleCompleteLesson(ctx.lesson.id)}
           onSaveExercise={handleSaveExercise}
