@@ -146,52 +146,72 @@ const AcademyScreen: React.FC<AcademyScreenProps> = ({ onClose, apiKey, activeMo
               {allCourses.map((course, i) => {
                 const percent = getCompletionPercent(course.id);
                 const progress = getProgress(course.id);
+                const isComingSoon = course.comingSoon;
+
                 return (
                   <motion.button
                     key={course.id}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: i * 0.1 }}
-                    onClick={() => setSelectedCourseId(course.id)}
-                    className="group text-left p-6 bg-surface rounded-2xl border border-border-dim hover:border-primary/40 transition-all hover:shadow-xl hover:shadow-primary/5 relative overflow-hidden"
+                    onClick={() => !isComingSoon && setSelectedCourseId(course.id)}
+                    disabled={isComingSoon}
+                    className={`group text-left p-6 bg-surface rounded-2xl border border-border-dim transition-all relative overflow-hidden ${
+                      isComingSoon 
+                        ? 'opacity-60 cursor-not-allowed grayscale-[0.3]' 
+                        : 'hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5'
+                    }`}
                   >
-                    {/* Gradient accent */}
-                    <div
-                      className="absolute top-0 left-0 right-0 h-1 opacity-60 group-hover:opacity-100 transition-opacity"
-                      style={{ background: `linear-gradient(90deg, ${course.color}, transparent)` }}
-                    />
+                    {/* Gradient accent (só se não for coming soon) */}
+                    {!isComingSoon && (
+                      <div
+                        className="absolute top-0 left-0 right-0 h-1 opacity-60 group-hover:opacity-100 transition-opacity"
+                        style={{ background: `linear-gradient(90deg, ${course.color}, transparent)` }}
+                      />
+                    )}
+
+                    {/* Badge Em Breve */}
+                    {isComingSoon && (
+                      <div className="absolute top-4 right-4 bg-background/80 px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase border border-border-dim text-[#9aa0a6]">
+                        Em Breve
+                      </div>
+                    )}
 
                     <div className="flex items-start gap-4">
                       <div
                         className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0"
                         style={{ backgroundColor: `${course.color}15` }}
                       >
-                        {course.icon}
+                        <span className={isComingSoon ? 'opacity-50' : ''}>{course.icon}</span>
                       </div>
-                      <div className="flex-1 min-w-0 space-y-2">
-                        <h4 className="font-bold text-white group-hover:text-primary transition-colors line-clamp-1">
+                      <div className="flex-1 min-w-0 space-y-2 pr-12">
+                        <h4 className={`font-bold transition-colors line-clamp-1 ${isComingSoon ? 'text-[#9aa0a6]' : 'text-white group-hover:text-primary'}`}>
                           {course.title}
                         </h4>
                         <p className="text-[11px] text-[#9aa0a6] line-clamp-2 leading-relaxed">
                           {course.description}
                         </p>
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <span className={`text-[10px] font-bold uppercase ${getDifficultyColor(course.difficulty)}`}>
-                            {getDifficultyLabel(course.difficulty)}
-                          </span>
-                          <span className="text-[10px] text-[#9aa0a6] flex items-center gap-1">
-                            <Clock size={10} /> {course.estimatedHours}h
-                          </span>
-                          <span className="text-[10px] text-[#9aa0a6] flex items-center gap-1">
-                            <BookOpen size={10} /> {getTotalLessons(course.id)} lições
-                          </span>
-                        </div>
+                        {!isComingSoon && (
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className={`text-[10px] font-bold uppercase ${getDifficultyColor(course.difficulty)}`}>
+                              {getDifficultyLabel(course.difficulty)}
+                            </span>
+                            <span className="text-[10px] text-[#9aa0a6] flex items-center gap-1">
+                              <Clock size={10} /> {course.estimatedHours}h
+                            </span>
+                            <span className="text-[10px] text-[#9aa0a6] flex items-center gap-1">
+                              <BookOpen size={10} /> {getTotalLessons(course.id)} lições
+                            </span>
+                          </div>
+                        )}
                       </div>
-                      <ChevronRight size={18} className="text-[#444746] group-hover:text-primary transition-colors shrink-0 mt-1" />
+                      {!isComingSoon && (
+                        <ChevronRight size={18} className="text-[#444746] group-hover:text-primary transition-colors shrink-0 mt-1" />
+                      )}
                     </div>
 
                     {/* Progress bar */}
-                    {progress && (
+                    {progress && !isComingSoon && (
                       <div className="mt-4 space-y-1.5">
                         <div className="flex justify-between text-[10px]">
                           <span className="text-[#9aa0a6]">Progresso</span>
@@ -211,13 +231,6 @@ const AcademyScreen: React.FC<AcademyScreenProps> = ({ onClose, apiKey, activeMo
                 );
               })}
 
-              {/* Card "Em breve" */}
-              <div className="p-6 bg-surface/30 rounded-2xl border border-dashed border-border-dim flex items-center justify-center">
-                <div className="text-center space-y-2">
-                  <Star size={24} className="text-[#444746] mx-auto" />
-                  <p className="text-xs text-[#444746] font-bold">Mais cursos em breve</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>

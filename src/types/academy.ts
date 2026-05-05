@@ -26,6 +26,7 @@ export interface Course {
   estimatedHours: number;
   modules: CourseModule[];
   tags?: string[];
+  comingSoon?: boolean;
 }
 
 /** Módulo dentro de um curso (ex: "Introdução ao PowerShell") */
