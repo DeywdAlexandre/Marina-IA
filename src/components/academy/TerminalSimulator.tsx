@@ -224,6 +224,10 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'get-process | select-object name, cpu, memory | export-csv -path "c:\\processos.csv" -notypeinformation': '',
   '$textojson = \'{ "nome": "marina", "idade": 25 }\'': '',
   '$objeto = $textojson | convertfrom-json': '',
+
+  // === Módulo 10: Projeto Final ===
+  'get-ciminstance win32_logicaldisk | where-object { $_.deviceid -eq "c:" }': '\nDeviceID DriveType ProviderName VolumeName Size          FreeSpace\n-------- --------- ------------ ---------- ----          ---------\nC:       3                      OS         511311654912  102832918528\n',
+  'compress-archive -path "c:\\users\\aluno\\documents\\projetos\\*" -destinationpath "c:\\backups\\backup.zip" -update -erroraction stop': '',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
