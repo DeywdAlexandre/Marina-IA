@@ -53,23 +53,17 @@ Para quem quer ter o controle total sobre qual IA usar e quanto pagar.
 ## 🎓 Pilar 5: Marina Academy (Educação Tech)
 Transformar a Marina em uma mentora de programação de elite.
 
-### 5.1 Trilha JavaScript Intermediário (CONCLUÍDO ✅)
-- Foco em DOM, APIs e Persistência Local.
-- Projeto Final: Marina Finance.
+- [x] **Módulo de Academy:** Sistema de cursos, lições, simuladores e quizzes.
+- [x] **Trilha JavaScript Completa:** Lógica (10 mod), Intermediário (7 mod) e Avançado (7 mod).
+- [x] **Marina PDF Engine:** Exportação de módulos completos para Markdown/PDF (Otimizado para NotebookLM).
+- [/] **Integração NotebookLM:** Geração de roteiros de vídeo a partir dos materiais de apoio.
+- [ ] **Sistema de Certificados:** Geração de PDF oficial pós-conclusão.
 
-### 5.2 JavaScript Avançado: Engenharia e Arquitetura de Sistemas
-*Foco em criar softwares profissionais, escaláveis e funcionais.*
+### 5.1 Projetos Realizados (Concluídos ✅)
+- **Marina Finance** (JS Intermediário)
+- **Marina POS & Inventory** (JS Avançado)
+- **Marina Business CRM** (JS Avançado)
 
-- [ ] **Módulo 1: JavaScript Moderno ES6+ (6 aulas)**
-    - Foco em sintaxe de alta performance, coleções (Map/Set) e arquitetura de módulos.
-- [ ] **Módulo 2: Orientação a Objetos Profissional (5 aulas)**
-    - Classes, herança, encapsulamento (privados) e composição para sistemas complexos.
-- [ ] **Módulo 3: Engenharia de Software e Patterns (5 aulas)**
-    - Princípios SOLID, Singleton, Factory e Observer aplicados ao Vanilla JS.
-- [ ] **Módulo 4: Performance e Alta Ordem (5 aulas)**
-    - Otimização, Memoization, Web Workers e processamento de grandes volumes de dados.
-- [ ] **Módulo 5: PROJETO 1 - Marina POS & Inventory (Sistema de Vendas)**
-    - Sistema completo de controle de estoque e ponto de venda com persistência íntegra.
-- [ ] **Módulo 6: PROJETO 2 (BÔNUS) - Marina Business CRM (Gestão de Clientes)**
-    - Dashboard de faturamento, filtros complexos e gestão de relacionamento.
-- [ ] **Módulo Final: Maestria Técnica e Certificação.**
+---
+*Documento atualizado em 05/05/2026*
+

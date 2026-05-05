@@ -10,9 +10,11 @@ import {
   BookOpen,
   Trophy,
   Lock,
-  ScrollText
+  ScrollText,
+  Download
 } from 'lucide-react';
 import { Course, CourseModule, CourseProgress, Lesson, ModuleQuizResult } from '../../types/academy';
+import { exportModuleToMarkdown } from '../../services/academy/ExportService';
 import LessonView from './LessonView';
 import ModuleQuizView from './ModuleQuizView';
 
@@ -139,6 +141,17 @@ const CourseView: React.FC<CourseViewProps> = ({
       lastAccessedAt: now
     };
     onUpdateProgress(updated);
+  };
+
+  const handleDownloadModule = (mod: CourseModule) => {
+    const md = exportModuleToMarkdown(mod);
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Marina_Academy_\${mod.title.replace(/\s+/g, '_')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Encontrar a lição ativa e calcular next/prev
@@ -298,12 +311,24 @@ const CourseView: React.FC<CourseViewProps> = ({
                     </div>
                     <h3 className={`text-sm font-bold line-clamp-1 ${isLocked ? 'text-[#666]' : 'text-white'}`}>{mod.title}</h3>
                   </div>
-                  <span className="text-[10px] text-[#9aa0a6] font-mono shrink-0">
-                    {completedModItems}/{totalModItems}
-                  </span>
-                  {!isLocked && (
-                    <ChevronDown size={16} className={`text-[#9aa0a6] transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
-                  )}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadModule(mod);
+                      }}
+                      className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-[#9aa0a6] hover:text-primary tooltip"
+                      title="Baixar material do módulo"
+                    >
+                      <Download size={14} />
+                    </button>
+                    <span className="text-[10px] text-[#9aa0a6] font-mono">
+                      {completedModItems}/{totalModItems}
+                    </span>
+                    {!isLocked && (
+                      <ChevronDown size={16} className={`text-[#9aa0a6] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    )}
+                  </div>
                 </button>
 
                 {/* Lessons + Quiz */}
