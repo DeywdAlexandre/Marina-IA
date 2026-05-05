@@ -47,3 +47,29 @@ Para quem quer ter o controle total sobre qual IA usar e quanto pagar.
 
 ### 4.2 Orquestrador de Modelos (Smart Routing)
 - **O que é**: Escolha automática do modelo baseado na complexidade da tarefa.
+
+---
+
+## 🎓 Pilar 5: Marina Academy (Educação Tech)
+Transformar a Marina em uma mentora de programação de elite.
+
+### 5.1 Trilha JavaScript Intermediário (CONCLUÍDO ✅)
+- Foco em DOM, APIs e Persistência Local.
+- Projeto Final: Marina Finance.
+
+### 5.2 JavaScript Avançado: Engenharia e Arquitetura de Sistemas
+*Foco em criar softwares profissionais, escaláveis e funcionais.*
+
+- [ ] **Módulo 1: JavaScript Moderno ES6+ (6 aulas)**
+    - Foco em sintaxe de alta performance, coleções (Map/Set) e arquitetura de módulos.
+- [ ] **Módulo 2: Orientação a Objetos Profissional (5 aulas)**
+    - Classes, herança, encapsulamento (privados) e composição para sistemas complexos.
+- [ ] **Módulo 3: Engenharia de Software e Patterns (5 aulas)**
+    - Princípios SOLID, Singleton, Factory e Observer aplicados ao Vanilla JS.
+- [ ] **Módulo 4: Performance e Alta Ordem (5 aulas)**
+    - Otimização, Memoization, Web Workers e processamento de grandes volumes de dados.
+- [ ] **Módulo 5: PROJETO 1 - Marina POS & Inventory (Sistema de Vendas)**
+    - Sistema completo de controle de estoque e ponto de venda com persistência íntegra.
+- [ ] **Módulo 6: PROJETO 2 (BÔNUS) - Marina Business CRM (Gestão de Clientes)**
+    - Dashboard de faturamento, filtros complexos e gestão de relacionamento.
+- [ ] **Módulo Final: Maestria Técnica e Certificação.**

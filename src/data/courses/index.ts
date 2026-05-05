@@ -7,6 +7,7 @@ import { shellBasicoCourse } from './shell-basico';
 import { gitCourse } from './git';
 import { logicaProgramacaoCourse } from './logica-programacao';
 import { jsIntermediarioCourse } from './js-intermediario';
+import { jsAvancadoCourse } from './js-avancado';
 
 /**
  * Lista de todos os cursos disponíveis na Academy.
@@ -18,23 +19,11 @@ export const allCourses: Course[] = [
   gitCourse,
   logicaProgramacaoCourse,
   jsIntermediarioCourse,
+  jsAvancadoCourse,
   
   // ==========================================
   // Cursos Em Breve
   // ==========================================
-  {
-    id: 'js-avancado-engenharia',
-    title: 'JavaScript Avançado: Arquitetura e Engenharia',
-    description: 'Aprenda ES6+, Classes, Módulos e performance para sistemas complexos.',
-    icon: '🚀',
-    color: '#61DAFB',
-    category: 'Lógica & Programação',
-    difficulty: 'advanced',
-    estimatedHours: 25,
-    modules: [],
-    tags: ['Arquitetura', 'OOP', 'ES6+', 'CleanCode'],
-    comingSoon: true,
-  },
   {
     id: 'redes-terminal',
     title: 'Redes no Terminal',
