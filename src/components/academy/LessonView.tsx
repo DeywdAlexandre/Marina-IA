@@ -15,7 +15,9 @@ import {
   Terminal,
   ChevronLeft,
   ChevronRight,
-  Code2
+  Code2,
+  Columns2,
+  Maximize2
 } from 'lucide-react';
 import { Lesson, ExerciseResult } from '../../types/academy';
 import ExerciseBlock from './ExerciseBlock';
@@ -96,7 +98,18 @@ const LessonView: React.FC<LessonViewProps> = ({
   const [copiedBlock, setCopiedBlock] = useState<string | null>(null);
   const [showTutor, setShowTutor] = useState(false);
   const [showSimulator, setShowSimulator] = useState(false);
+  const [isSplitMode, setIsSplitMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const simulatorRef = useRef<HTMLDivElement>(null);
+
+  // Detectar mobile para desativar split mode se necessário
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Reseta estado quando a lição muda
   useEffect(() => {
@@ -417,9 +430,27 @@ const LessonView: React.FC<LessonViewProps> = ({
                 <CheckCircle2 size={10} /> Concluída
               </span>
             )}
+
+            {!isMobile && (
+              <button
+                onClick={() => {
+                  setIsSplitMode(!isSplitMode);
+                  if (!isSplitMode) setShowSimulator(true);
+                }}
+                className={`p-1.5 rounded-lg transition-all text-xs flex items-center gap-1.5 ${isSplitMode ? 'bg-primary text-background' : 'hover:bg-[#333537] text-[#9aa0a6] hover:text-white'}`}
+                title="Modo Lado a Lado (Split View)"
+              >
+                <Columns2 size={14} />
+                <span className="hidden xl:inline text-[10px] font-bold">Split View</span>
+              </button>
+            )}
+
             <button
-              onClick={() => setShowSimulator(!showSimulator)}
-              className={`p-1.5 rounded-lg transition-all text-xs flex items-center gap-1.5 ${showSimulator ? 'bg-primary/20 text-primary' : 'hover:bg-[#333537] text-[#9aa0a6] hover:text-white'}`}
+              onClick={() => {
+                setShowSimulator(!showSimulator);
+                if (isSplitMode) setIsSplitMode(false);
+              }}
+              className={`p-1.5 rounded-lg transition-all text-xs flex items-center gap-1.5 ${showSimulator && !isSplitMode ? 'bg-primary/20 text-primary' : 'hover:bg-[#333537] text-[#9aa0a6] hover:text-white'}`}
               title={courseCategory === 'Sistemas e Terminal' ? "Abrir Terminal PowerShell" : "Abrir Editor de Código"}
             >
               {courseCategory === 'Sistemas e Terminal' ? <Terminal size={14} /> : <Code2 size={14} />}
@@ -448,9 +479,9 @@ const LessonView: React.FC<LessonViewProps> = ({
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className={`flex flex-1 overflow-hidden ${isSplitMode && !isMobile ? 'flex-row' : 'flex-col'}`}>
         {/* Main content area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className={`flex-1 flex flex-col overflow-hidden ${isSplitMode && !isMobile ? 'border-r border-border-dim/50' : ''}`}>
 
           {/* Step indicators (mini pills) */}
           <div className="px-4 md:px-8 py-3 border-b border-border-dim/30 bg-background/50 overflow-x-auto shrink-0">
@@ -475,15 +506,15 @@ const LessonView: React.FC<LessonViewProps> = ({
 
           {/* Scrollable content */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto">
-            <div className="max-w-3xl mx-auto px-4 md:px-8 py-6">
+            <div className={`max-w-3xl mx-auto px-4 md:px-8 py-6 ${isSplitMode && !isMobile ? 'pb-20' : ''}`}>
               <AnimatePresence mode="wait">
                 {renderStepContent()}
               </AnimatePresence>
             </div>
 
-            {/* Simulador embarcado */}
+            {/* Simulador embarcado (apenas se não estiver em split mode) */}
             <AnimatePresence>
-              {showSimulator && (
+              {showSimulator && (!isSplitMode || isMobile) && (
                 <div className="max-w-3xl mx-auto px-4 md:px-8 pb-6">
                   {courseCategory === 'Sistemas e Terminal' ? (
                     <TerminalSimulator
@@ -533,6 +564,51 @@ const LessonView: React.FC<LessonViewProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Simulador em Split View (Painel Direito) */}
+        <AnimatePresence>
+          {isSplitMode && !isMobile && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: '50%', opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              className="bg-[#0c0c0c] flex flex-col border-l border-border-dim relative"
+            >
+              <div className="flex-1 flex flex-col p-4 overflow-hidden">
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <div className="flex items-center gap-2">
+                    <Columns2 size={16} className="text-primary" />
+                    <h3 className="text-sm font-bold text-white">Ambiente de Prática</h3>
+                  </div>
+                  <button 
+                    onClick={() => setIsSplitMode(false)}
+                    className="p-1.5 hover:bg-[#2a2a2a] rounded-lg text-[#666] hover:text-white transition-colors"
+                  >
+                    <Maximize2 size={14} />
+                  </button>
+                </div>
+                <div className="flex-1 rounded-xl border border-border-dim overflow-hidden bg-black shadow-2xl">
+                  {courseCategory === 'Sistemas e Terminal' ? (
+                    <div className="h-full">
+                      <TerminalSimulator
+                        isOpen={true}
+                        onClose={() => setIsSplitMode(false)}
+                        welcomeMessage="Modo Split Ativo. Pratique enquanto lê!"
+                        fullHeight={true}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-full">
+                      <CodeSimulator 
+                        initialCode={lesson.content.codeExamples?.[0]?.code || '// Teste o conteúdo da aula aqui...\n'} 
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Tutor sidebar */}
         <AnimatePresence>

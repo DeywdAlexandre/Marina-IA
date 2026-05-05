@@ -351,9 +351,11 @@ interface TerminalSimulatorProps {
   onClose: () => void;
   /** Mensagem inicial opcional */
   welcomeMessage?: string;
+  /** Se deve ocupar toda a altura disponível do pai */
+  fullHeight?: boolean;
 }
 
-const TerminalSimulator: React.FC<TerminalSimulatorProps> = ({ isOpen, onClose, welcomeMessage }) => {
+const TerminalSimulator: React.FC<TerminalSimulatorProps> = ({ isOpen, onClose, welcomeMessage, fullHeight }) => {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [input, setInput] = useState('');
   const [cmdHistory, setCmdHistory] = useState<string[]>([]);
@@ -449,7 +451,7 @@ const TerminalSimulator: React.FC<TerminalSimulatorProps> = ({ isOpen, onClose, 
       initial={{ y: 30, opacity: 0, scale: 0.95 }}
       animate={{ y: 0, opacity: 1, scale: 1 }}
       exit={{ y: 30, opacity: 0, scale: 0.95 }}
-      className={`${isMaximized ? 'fixed inset-4 z-[120]' : 'w-full'} flex flex-col rounded-xl overflow-hidden shadow-2xl shadow-black/50 border border-[#3a3a3a]`}
+      className={`${isMaximized ? 'fixed inset-4 z-[120]' : fullHeight ? 'h-full w-full' : 'w-full'} flex flex-col rounded-xl overflow-hidden shadow-2xl shadow-black/50 border border-[#3a3a3a]`}
     >
       {/* Title bar — estilo Windows Terminal */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#1f1f1f] border-b border-[#333]">
@@ -484,7 +486,7 @@ const TerminalSimulator: React.FC<TerminalSimulatorProps> = ({ isOpen, onClose, 
       <div
         ref={scrollRef}
         onClick={() => inputRef.current?.focus()}
-        className="flex-1 bg-[#0c0c0c] p-3 overflow-y-auto font-mono text-[13px] leading-relaxed min-h-[200px] max-h-[400px] cursor-text"
+        className={`flex-1 bg-[#0c0c0c] p-3 overflow-y-auto font-mono text-[13px] leading-relaxed cursor-text ${fullHeight ? '' : 'min-h-[200px] max-h-[400px]'}`}
       >
         {/* Welcome */}
         <div className="text-[#666] text-[11px] mb-3">
