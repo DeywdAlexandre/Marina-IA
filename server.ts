@@ -3,10 +3,13 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+import { createClerkClient } from "@clerk/backend";
 import { spawn, execSync } from "child_process";
 import fs from "fs";
 
 dotenv.config();
+
+const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -172,6 +175,42 @@ async function startServer() {
       res.write(`data: ${JSON.stringify({ done: true, code })}\n\n`);
       res.end();
     });
+  });
+
+  // ── Clerk Endpoints ────────────────────────────────────────────────────────
+  app.post("/api/clerk/update-progress", async (req, res) => {
+    const { userId, progress } = req.body;
+    if (!userId) return res.status(400).json({ error: "userId missing" });
+
+    try {
+      await clerkClient.users.updateUserMetadata(userId, {
+        publicMetadata: { progress }
+      });
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/clerk/users", async (req, res) => {
+    try {
+      const response = await clerkClient.users.getUserList();
+      res.json({ users: response.data || [] });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/clerk/make-admin", async (req, res) => {
+    const { userId } = req.body;
+    try {
+      await clerkClient.users.updateUserMetadata(userId, {
+        publicMetadata: { role: "admin" }
+      });
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // ── Vite middleware ───────────────────────────────────────────────────────

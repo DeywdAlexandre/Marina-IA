@@ -1,6 +1,7 @@
 import { CourseModule } from '../../../types/academy';
 import { lesson0101 } from './lessons/lesson0101';
 import { lesson0102 } from './lessons/lesson0102';
+import { lesson0103 } from './lessons/lesson0103';
 import { lesson01Video } from './lessons/lesson01_video';
 
 export const module01: CourseModule = {
@@ -10,6 +11,7 @@ export const module01: CourseModule = {
   icon: '🧱',
   lessons: [
     lesson0101,
+    lesson0103, // Inserida aqui para explicar a sintaxe antes dos tipos
     lesson0102,
     lesson01Video
   ],

@@ -12,7 +12,11 @@ import {
 import { allCourses } from '../../data/courses';
 import { CourseProgress } from '../../types/academy';
 import { storageService } from '../../services/storageService';
+import { useUser, SignInButton, Show } from "@clerk/react";
+import { clerkService } from '../../services/clerkService';
 import CourseView from './CourseView';
+import AdminPanel from './AdminPanel';
+import { ShieldCheck, Settings } from 'lucide-react';
 
 interface AcademyScreenProps {
   onClose: () => void;
@@ -21,12 +25,39 @@ interface AcademyScreenProps {
 }
 
 const AcademyScreen: React.FC<AcademyScreenProps> = ({ onClose, apiKey, activeModel }) => {
+  const { user, isLoaded, isSignedIn } = useUser();
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [progressList, setProgressList] = useState<CourseProgress[]>(() => storageService.loadAcademyProgress());
+
+  const isAdmin = user?.publicMetadata?.role === 'admin';
+
+  // Sincroniza progresso do Clerk ao carregar
+  useEffect(() => {
+    if (isLoaded && isSignedIn && user?.publicMetadata?.progress) {
+      const cloudProgress = user.publicMetadata.progress as CourseProgress[];
+      setProgressList(prev => {
+        const merged = [...prev];
+        cloudProgress.forEach(cp => {
+          const localIdx = merged.findIndex(lp => lp.courseId === cp.courseId);
+          if (localIdx === -1) {
+            merged.push(cp);
+          } else if (cp.completedLessons.length > merged[localIdx].completedLessons.length) {
+            merged[localIdx] = cp;
+          }
+        });
+        return merged;
+      });
+    }
+  }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
     storageService.saveAcademyProgress(progressList);
-  }, [progressList]);
+    // Sincroniza com a nuvem se logado
+    if (isSignedIn && user?.id) {
+      clerkService.syncProgress(user.id, progressList);
+    }
+  }, [progressList, isSignedIn, user?.id]);
 
   const getProgress = (courseId: string): CourseProgress | undefined => {
     return progressList.find(p => p.courseId === courseId);
@@ -69,6 +100,10 @@ const AcademyScreen: React.FC<AcademyScreenProps> = ({ onClose, apiKey, activeMo
     return map[d] || '';
   };
 
+  if (showAdmin && isAdmin) {
+    return <AdminPanel onBack={() => setShowAdmin(false)} />;
+  }
+
   // --- Tela do curso aberto ---
   if (selectedCourse) {
     return (
@@ -107,11 +142,24 @@ const AcademyScreen: React.FC<AcademyScreenProps> = ({ onClose, apiKey, activeMo
             <h1 className="text-lg font-bold">Marina Academy</h1>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[#9aa0a6]">
-          <Trophy size={16} className="text-yellow-500" />
-          <span className="text-xs font-bold">
-            {progressList.reduce((sum, p) => sum + p.completedLessons.length, 0)} lições completas
-          </span>
+        
+        <div className="flex items-center gap-4">
+          {isAdmin && (
+            <button 
+              onClick={() => setShowAdmin(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-full border border-primary/20 transition-all text-xs font-bold"
+            >
+              <ShieldCheck size={14} />
+              <span>Painel Master</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-2 text-[#9aa0a6]">
+            <Trophy size={16} className="text-yellow-500" />
+            <span className="text-xs font-bold">
+              {progressList.reduce((sum, p) => sum + p.completedLessons.length, 0)} lições
+            </span>
+          </div>
         </div>
       </header>
 

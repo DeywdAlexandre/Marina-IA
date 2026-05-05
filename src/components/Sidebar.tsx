@@ -12,6 +12,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChatSession, Folder } from '../types/expo';
+import { 
+  Show, 
+  SignInButton, 
+  SignUpButton, 
+  UserButton 
+} from "@clerk/react";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -75,10 +81,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <div className="p-6 border-b border-[#444746] flex items-center justify-between">
               <div className="flex items-center gap-3 text-[#e3e3e3]">
-                <div className="w-9 h-9 rounded-full overflow-hidden border border-primary/30 shadow-md">
-                  <img src={marinaAvatar} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                </div>
-                <h1 className="font-bold text-xl tracking-tighter">Marina</h1>
+                <Show when="signed-in">
+                  <UserButton afterSignOutUrl="/" />
+                  <h1 className="font-bold text-xl tracking-tighter">Marina</h1>
+                </Show>
+                <Show when="signed-out">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-full overflow-hidden border border-primary/30 shadow-md">
+                      <img src={marinaAvatar} alt="Marina" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    </div>
+                    <SignInButton mode="modal">
+                      <button className="text-xs font-bold bg-primary/20 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/30 transition-colors">Entrar</button>
+                    </SignInButton>
+                  </div>
+                </Show>
               </div>
               <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 hover:bg-[#333537] rounded-full">
                 <Menu size={20} />
