@@ -1,5 +1,6 @@
 import { Course } from '../../../types/academy';
 import { module01 } from './module01';
+import { module02 } from './module02';
 
 export const jsIntermediarioCourse: Course = {
   id: 'js-intermediario-apis',
@@ -13,5 +14,6 @@ export const jsIntermediarioCourse: Course = {
   tags: ['JavaScript', 'DOM', 'APIs', 'Async', 'Frontend'],
   modules: [
     module01,
+    module02,
   ]
 };
