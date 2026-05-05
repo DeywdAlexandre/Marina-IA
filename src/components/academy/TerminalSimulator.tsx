@@ -283,6 +283,11 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'git switch teste-de-cores': '\nSwitched to branch \'teste-de-cores\'\n',
   'git merge teste-de-cores': '\nUpdating a1b2c3d..e4f5g6h\nFast-forward\n index.html | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n',
   'git branch -d teste-de-cores': '\nDeleted branch teste-de-cores (was e4f5g6h).\n',
+  'git remote add origin https://github.com/marina/meu-app.git': '',
+  'git push -u origin master': '\nEnumerating objects: 5, done.\nCounting objects: 100% (5/5), done.\nDelta compression using up to 8 threads\nCompressing objects: 100% (3/3), done.\nWriting objects: 100% (3/3), 324 bytes | 324.00 KiB/s, done.\nTotal 3 (delta 1), reused 0 (delta 0), pack-reused 0\nTo https://github.com/marina/meu-app.git\n * [new branch]      master -> master\nbranch \'master\' set up to track remote branch \'master\' from \'origin\'.\n',
+  'git push': '\nEverything up-to-date\n',
+  'git pull origin master': '\nFrom https://github.com/marina/meu-app\n * branch            master     -> FETCH_HEAD\nAlready up to date.\n',
+  'git fetch origin': '\nFrom https://github.com/marina/meu-app\n   a1b2c3d..e4f5g6h  master     -> origin/master\n',
 };
 
 // Funções para comandos dinâmicos (que aceitam argumentos variáveis)
@@ -320,6 +325,12 @@ function getSimulatedOutput(cmd: string): string | null {
     const parts = normalized.split(' ');
     const branchName = parts[parts.length - 1];
     return `\nSwitched to a new branch '${branchName}'\n`;
+  }
+
+  if (normalized.startsWith('git clone ')) {
+    const parts = normalized.split('/');
+    const repoName = parts[parts.length - 1].replace('.git', '');
+    return `\nCloning into '${repoName}'...\nremote: Enumerating objects: 154, done.\nremote: Counting objects: 100% (154/154), done.\nremote: Compressing objects: 100% (98/98), done.\nremote: Total 154 (delta 62), reused 130 (delta 45), pack-reused 0\nReceiving objects: 100% (154/154), 45.23 KiB | 226.00 KiB/s, done.\nResolving deltas: 100% (62/62), done.\n`;
   }
 
   return null;

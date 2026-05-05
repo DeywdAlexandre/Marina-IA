@@ -3,6 +3,7 @@ import { module01 } from './module01';
 import { module02 } from './module02';
 import { module03 } from './module03';
 import { module04 } from './module04';
+import { module05 } from './module05';
 
 /**
  * Curso de Git e GitHub (Controle de Versão)
@@ -22,7 +23,7 @@ export const gitCourse: Course = {
     module02,
     module03,
     module04,
-    // module05,
+    module05,
     // module06,
     // module07,
     // module08,
