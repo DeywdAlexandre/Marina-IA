@@ -174,6 +174,33 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'get-date | out-file -filepath "registro.txt" -append': '',
   '"olá mundo!" > saudacao.txt': '',
   'get-date >> saudacao.txt': '',
+
+  // === Módulo 5: Variáveis e Tipos ===
+  '$nome = "marina"': '',
+  '$idade = 25': '',
+  '$nome': '\nMarina\n',
+  '$idade': '\n25\n',
+  '$idadenofuturo = $idade + 10': '',
+  '$idadenofuturo': '\n35\n',
+  'write-host "olá, meu nome é $nome e eu tenho $idade anos."': '\nOlá, meu nome é Marina e eu tenho 25 anos.\n',
+  '$nome.gettype()': '\nIsPublic IsSerial Name                                     BaseType\n-------- -------- ----                                     --------\nTrue     True     String                                   System.Object\n',
+  '$idade.gettype()': '\nIsPublic IsSerial Name                                     BaseType\n-------- -------- ----                                     --------\nTrue     True     Int32                                    System.ValueType\n',
+  'write-host \'meu nome é $nome\'': '\nMeu nome é $nome\n',
+  'write-host "meu nome é $nome"': '\nMeu nome é Marina\n',
+  '$total = $preco * 2': '',
+  '$usuarioestalogado = $true': '',
+  '$temerro = $false': '',
+  '$frutas = @("maçã", "banana", "laranja", "uva")': '',
+  '$frutas[0]': '\nMaçã\n',
+  '$frutas[2]': '\nLaranja\n',
+  '$frutas[-1]': '\nUva\n',
+  '$frutas[-2]': '\nLaranja\n',
+  '$usuario = @{ nome = "marina"; idade = 25; departamento = "ti" }': '',
+  '$usuario = @{\n    nome = "marina"\n    idade = 25\n    departamento = "ti"\n}': '',
+  '$usuario["departamento"]': '\nTI\n',
+  '$usuario.nome': '\nMarina\n',
+  '$frutas += "morango"': '',
+  '$usuario.permissao = "admin"': '',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
