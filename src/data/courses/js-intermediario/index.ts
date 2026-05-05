@@ -3,6 +3,8 @@ import { module01 } from './module01';
 import { module02 } from './module02';
 import { module03 } from './module03';
 import { module04 } from './module04';
+import { module05 } from './module05';
+import { module06 } from './module06';
 
 export const jsIntermediarioCourse: Course = {
   id: 'js-intermediario-apis',
@@ -12,12 +14,14 @@ export const jsIntermediarioCourse: Course = {
   color: '#3178C6', // Azul (estilo TypeScript/Moderno)
   category: 'Lógica & Programação',
   difficulty: 'intermediate',
-  estimatedHours: 20,
+  estimatedHours: 25,
   tags: ['JavaScript', 'DOM', 'APIs', 'Async', 'Frontend'],
   modules: [
     module01,
     module02,
     module03,
     module04,
+    module05,
+    module06,
   ]
 };
