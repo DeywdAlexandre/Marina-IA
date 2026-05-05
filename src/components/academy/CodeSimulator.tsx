@@ -45,8 +45,10 @@ const CodeSimulator: React.FC<CodeSimulatorProps> = ({
   }, [output]);
 
   const runCode = (switchToPreview = true) => {
+    if (!iframeRef.current) return;
+    
     setIsRunning(true);
-    setOutput([]); // Limpa o console
+    setOutput([{ type: 'INFO', content: 'Iniciando execução...' }]); 
 
     const fullHtml = `
       <html>
@@ -118,27 +120,29 @@ const CodeSimulator: React.FC<CodeSimulatorProps> = ({
   // Escuta mensagens do iframe e atalhos de teclado
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.source !== 'marina-sandbox') return;
-      const { type, content } = event.data;
-      if (['LOG', 'ERROR', 'WARN', 'INFO'].includes(type)) {
-        setOutput(prev => [...prev, { type, content }]);
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        runCode();
+      // Filtro rigoroso para garantir que só pegamos mensagens do nosso sandbox
+      if (event.data && event.data.source === 'marina-sandbox') {
+        const { type, content } = event.data;
+        if (['LOG', 'ERROR', 'WARN', 'INFO'].includes(type)) {
+          setOutput(prev => [...prev, { type, content }]);
+        }
       }
     };
 
     window.addEventListener('message', handleMessage);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        runCode(true);
+      }
+    };
     window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       window.removeEventListener('message', handleMessage);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [files, activeTab]); // Dependências necessárias para runCode acessar os estados atuais
+  }, [files, activeTab]); // Re-bind apenas quando necessário para manter runCode atualizado
 
   const resetCode = () => {
     setFiles({ html: initialHtml, js: initialJs, css: initialCss });
@@ -212,7 +216,7 @@ const CodeSimulator: React.FC<CodeSimulatorProps> = ({
       <div className="flex-1 flex flex-col overflow-hidden min-h-[300px]">
         <div className="flex-1 flex overflow-hidden relative">
           <AnimatePresence mode="wait">
-            {activeTab !== 'preview' ? (
+            {activeTab !== 'preview' && (
               <motion.div 
                 key={activeTab}
                 initial={{ opacity: 0 }}
@@ -230,36 +234,29 @@ const CodeSimulator: React.FC<CodeSimulatorProps> = ({
                   onChange={(e) => updateActiveFileContent(e.target.value)}
                   spellCheck={false}
                   className="flex-1 pl-12 pr-4 py-4 bg-transparent text-[#d4d4d4] font-mono text-sm leading-6 outline-none resize-none"
-                  placeholder={`Escreva seu ${activeTab.toUpperCase()} aqui...`}
-                />
-              </motion.div>
-            ) : (
-              <motion.div 
-                key="preview"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 bg-white flex flex-col"
-              >
-                {/* Browser UI Mock */}
-                <div className="h-8 bg-[#f3f3f3] border-b flex items-center px-3 gap-2">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 rounded-full bg-gray-300" />
-                    <div className="w-2 h-2 rounded-full bg-gray-300" />
-                  </div>
-                  <div className="flex-1 max-w-md h-5 bg-white rounded border border-gray-200 text-[9px] flex items-center px-2 text-gray-500 font-mono">
-                    https://marina-sandbox.local/project
-                  </div>
-                </div>
-                <iframe
-                  ref={iframeRef}
-                  title="Live Preview"
-                  className="flex-1 w-full border-none"
-                  srcDoc={`<html><head><style>${files.css}</style></head><body>${files.html}</body></html>`}
                 />
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Iframe de execução sempre presente para permitir 'Executar no Console' em qualquer aba */}
+          <div className={`absolute inset-0 bg-white flex flex-col ${activeTab === 'preview' ? 'z-10' : 'z-[-1] invisible'}`}>
+            {/* Browser UI Mock */}
+            <div className="h-8 bg-[#f3f3f3] border-b flex items-center px-3 gap-2 shrink-0">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 rounded-full bg-gray-300" />
+                <div className="w-2 h-2 rounded-full bg-gray-300" />
+              </div>
+              <div className="flex-1 max-w-md h-5 bg-white rounded border border-gray-200 text-[9px] flex items-center px-2 text-gray-500 font-mono">
+                https://marina-sandbox.local/project
+              </div>
+            </div>
+            <iframe
+              ref={iframeRef}
+              title="Live Preview"
+              className="flex-1 w-full border-none"
+            />
+          </div>
         </div>
 
         {/* Console Fixo na Base */}
