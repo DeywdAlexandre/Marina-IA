@@ -1,5 +1,6 @@
 import { Course } from '../../../types/academy';
 import { module01 } from './module01';
+import { module02 } from './module02';
 
 /**
  * Curso Básico de Shell (Navegação Unix/Bash)
@@ -17,7 +18,7 @@ export const shellBasicoCourse: Course = {
   tags: ['Terminal', 'Linux', 'Bash', 'Zsh', 'Iniciante'],
   modules: [
     module01,
-    // module02, — O GPS do Computador (pwd, ls, cd)
+    module02,
     // module03, — Manipulação de Arquivos (mkdir, touch, cp, mv, rm)
   ]
 };

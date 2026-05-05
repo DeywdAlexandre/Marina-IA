@@ -238,7 +238,15 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   '[gc]::collect()': '',
 
   // === Curso Shell Básico ===
+  // === Curso Shell Básico ===
   'echo "hello world"': '\nHello World\n',
+  'pwd': '\n/home/marina/documentos\n',
+  'ls': '\nProjetos\nDownloads\nFotos\nrelatorio.pdf\n',
+  'ls -l': '\ndrwxr-xr-x 2 marina marina 4096 Mai 04 14:00 Projetos\ndrwxr-xr-x 2 marina marina 4096 Mai 04 14:05 Downloads\ndrwxr-xr-x 2 marina marina 4096 Mai 04 14:10 Fotos\n-rw-r--r-- 1 marina marina 2048 Mai 04 14:15 relatorio.pdf\n',
+  'ls -a': '\n.\n..\n.config\n.bashrc\nProjetos\nDownloads\nFotos\nrelatorio.pdf\n',
+  'cd downloads': '',
+  'cd ..': '',
+  'cd ~': '',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
