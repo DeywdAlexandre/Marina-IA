@@ -4,6 +4,7 @@
 import { Course } from '../../types/academy';
 import { powershellCourse } from './powershell';
 import { shellBasicoCourse } from './shell-basico';
+import { gitCourse } from './git';
 
 /**
  * Lista de todos os cursos disponíveis na Academy.
@@ -12,22 +13,11 @@ import { shellBasicoCourse } from './shell-basico';
 export const allCourses: Course[] = [
   shellBasicoCourse,
   powershellCourse,
+  gitCourse,
   
   // ==========================================
   // Cursos Em Breve
   // ==========================================
-  {
-    id: 'git-basico',
-    title: 'Git: Controle de Versão',
-    description: 'Aprenda a salvar, versionar e compartilhar seu código com o GitHub.',
-    icon: '🐙',
-    color: '#F05032',
-    difficulty: 'intermediate',
-    estimatedHours: 8,
-    modules: [],
-    tags: ['Git', 'GitHub', 'Programação'],
-    comingSoon: true,
-  },
   {
     id: 'redes-terminal',
     title: 'Redes no Terminal',

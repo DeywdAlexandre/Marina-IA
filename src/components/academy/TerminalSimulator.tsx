@@ -260,15 +260,46 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'rm foto1.jpg foto2.jpg foto3.jpg': '',
   'rm -r minhasfotos': '',
   'rm -rf /': '\nrm: it is dangerous to operate recursively on '/'\nrm: use --no-preserve-root to override this failsafe\n',
+
+  // === Curso Git & GitHub ===
+  'git init': '\nInitialized empty Git repository in /home/marina/projetos/meu-app/.git/\n',
+  'git add .': '',
+  'git add index.html': '',
+  'git config --list': '\nuser.name=Marina Oliveira\nuser.email=marina@exemplo.com.br\ncore.repositoryformatversion=0\ncore.filemode=true\ncore.bare=false\ncore.logallrefupdates=true\n',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
 function getSimulatedOutput(cmd: string): string | null {
   const normalized = cmd.trim().toLowerCase().replace(/\s+/g, ' ');
+  
+  // 1. Checa correspondência exata primeiro
   const entry = SIMULATED_OUTPUTS[normalized];
-  if (!entry) return null;
-  if (typeof entry === 'function') return entry();
-  return entry;
+  if (entry) {
+    if (typeof entry === 'function') return entry();
+    return entry;
+  }
+
+  // 2. Checa funções dinâmicas para comandos que recebem argumentos
+  if (normalized.startsWith('echo ')) {
+    return `\n${normalized.slice(5).replace(/['"]/g, '')}\n`;
+  }
+  
+  if (normalized.startsWith('git commit')) {
+    if (normalized.includes('-m')) {
+      const match = cmd.match(/-m\s+["']([^"']+)["']/);
+      const msg = match ? match[1] : 'commit sem mensagem';
+      return `\n[master (root-commit) a1b2c3d] ${msg}\n 3 files changed, 125 insertions(+)\n create mode 100644 index.html\n create mode 100644 style.css\n create mode 100644 script.js\n`;
+    }
+    return '\nAborting commit due to empty commit message.\n';
+  }
+
+  if (normalized.startsWith('git config')) {
+    if (normalized.includes('user.name') || normalized.includes('user.email')) {
+      return ''; // Silencioso em caso de sucesso
+    }
+  }
+
+  return null;
 }
 
 interface HistoryEntry {
