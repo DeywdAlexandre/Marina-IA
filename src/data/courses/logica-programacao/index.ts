@@ -3,6 +3,7 @@ import { module01 } from './module01';
 import { module02 } from './module02';
 import { module03 } from './module03';
 import { module04 } from './module04';
+import { module05 } from './module05';
 
 export const logicaProgramacaoCourse: Course = {
   id: 'logica-programacao-js',
@@ -19,5 +20,6 @@ export const logicaProgramacaoCourse: Course = {
     module02,
     module03,
     module04,
+    module05,
   ]
 };
