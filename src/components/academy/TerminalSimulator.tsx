@@ -217,6 +217,13 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'get-childitem c:\\windows -recurse -erroraction silentlycontinue': '', // Simulando output limpo (vazio aqui por simplicidade)
   'remove-item *.tmp -whatif': '\nWhat if: Performing the operation "Remove File" on target "C:\\Users\\Aluno\\arquivo_lixo.tmp".\n',
   'remove-item *.tmp -confirm': '\nConfirm\nAre you sure you want to perform this action?\nPerforming the operation "Remove File" on target "C:\\Users\\Aluno\\arquivo_lixo.tmp".\n[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "Y"):\n',
+
+  // === Módulo 9: Automação Prática ===
+  'import-csv -path "c:\\usuarios.csv"': '\nNome        Cargo     Departamento\n----        -----     ------------\nJoao        Analista  TI\nMaria       Gerente   RH\n',
+  '$lista = import-csv -path "c:\\usuarios.csv"': '',
+  'get-process | select-object name, cpu, memory | export-csv -path "c:\\processos.csv" -notypeinformation': '',
+  '$textojson = \'{ "nome": "marina", "idade": 25 }\'': '',
+  '$objeto = $textojson | convertfrom-json': '',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
