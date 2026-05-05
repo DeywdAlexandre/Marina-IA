@@ -4,6 +4,7 @@ import { lesson0602 } from './lessons/lesson0602';
 import { lesson0603 } from './lessons/lesson0603';
 import { lesson0604 } from './lessons/lesson0604';
 import { lesson0605 } from './lessons/lesson0605';
+import { lesson06Video } from './lessons/lesson06_video';
 
 export const module06: CourseModule = {
   id: 'js-adv-mod-06',
@@ -16,6 +17,7 @@ export const module06: CourseModule = {
     lesson0603,
     lesson0604,
     lesson0605,
+    lesson06Video,
   ],
   quiz: {
     passingScore: 80,

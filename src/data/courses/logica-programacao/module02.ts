@@ -2,15 +2,17 @@ import { CourseModule } from '../../../types/academy';
 import { lesson0201 } from './lessons/lesson0201';
 import { lesson0202 } from './lessons/lesson0202';
 import { lesson0203 } from './lessons/lesson0203';
+import { lesson02Video } from './lessons/lesson02_video';
 
 export const module02: CourseModule = {
   id: 'lp-mod-02',
-  title: 'Operadores e Expressões',
-  description: 'Transforme seu código em uma calculadora poderosa. Aprenda a manipular números, entender a precedência matemática e usar atalhos de incremento.',
-  icon: '🧮',
+  title: 'Operadores: A Matemática da Programação',
+  description: 'Aprenda a fazer cálculos, comparações e operações lógicas fundamentais para qualquer programa.',
+  icon: '➕',
   lessons: [
     lesson0201,
     lesson0202,
+    lesson02Video,
     lesson0203,
   ],
   quiz: {

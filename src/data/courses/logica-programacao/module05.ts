@@ -3,6 +3,7 @@ import { lesson0501 } from './lessons/lesson0501';
 import { lesson0502 } from './lessons/lesson0502';
 import { lesson0503 } from './lessons/lesson0503';
 import { lesson0504 } from './lessons/lesson0504';
+import { lesson05Video } from './lessons/lesson05_video';
 
 export const module05: CourseModule = {
   id: 'lp-mod-05',
@@ -14,6 +15,7 @@ export const module05: CourseModule = {
     lesson0502,
     lesson0503,
     lesson0504,
+    lesson05Video,
   ],
   quiz: {
     passingScore: 70,

@@ -2,6 +2,7 @@ import { CourseModule } from '../../../types/academy';
 import { lesson0601 } from './lessons/lesson0601';
 import { lesson0602 } from './lessons/lesson0602';
 import { lesson0603 } from './lessons/lesson0603';
+import { lesson06Video } from './lessons/lesson06_video';
 
 export const module06: CourseModule = {
   id: 'js-int-mod-06',
@@ -12,5 +13,6 @@ export const module06: CourseModule = {
     lesson0601,
     lesson0602,
     lesson0603,
+    lesson06Video,
   ]
 };
