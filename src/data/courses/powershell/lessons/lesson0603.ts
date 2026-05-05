@@ -82,8 +82,8 @@ foreach ($numero in 1..10) {
 
 ## 📝 Resumo Rápido
 
-- **while**: Testa a condição no topo. Repete **enquanto** for `$true`. Pode rodar 0 vezes.
-- **do-until**: Testa a condição no fundo. Executa pelo menos uma vez. Repete **até que** vire `$true`.
+- **while**: Testa a condição no topo. Repete **enquanto** for \`$true\`. Pode rodar 0 vezes.
+- **do-until**: Testa a condição no fundo. Executa pelo menos uma vez. Repete **até que** vire \`$true\`.
 - Risco de Loop Infinito: Sempre se certifique de que a variável da condição será alterada dentro do loop!
 - **break**: Destrói o loop e sai dele.
 - **continue**: Pula para a próxima repetição sem terminar a atual.
