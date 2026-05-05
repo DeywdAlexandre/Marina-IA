@@ -201,6 +201,16 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   '$usuario.nome': '\nMarina\n',
   '$frutas += "morango"': '',
   '$usuario.permissao = "admin"': '',
+
+  // === Módulo 7: Funções e Scripts ===
+  'function mostrar-boasvindas { write-host "olá! seja bem-vindo ao sistema."\nwrite-host "data de hoje:"\nget-date }': '',
+  'mostrar-boasvindas': '\nOlá! Seja bem-vindo ao sistema.\nData de hoje:\n' + new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR') + '\n',
+  'function mostrar-boasvindas { param($nome, $idade) write-host "olá $nome! você tem $idade anos." }': '',
+  'mostrar-boasvindas -nome "marina" -idade 25': '\nOlá Marina! Você tem 25 anos.\n',
+  'function somar-numeros { param([int]$a, [int]$b) return $a + $b }': '',
+  'somar-numeros -a 10 -b 5': '\n15\n',
+  'set-executionpolicy remotesigned': '',
+  '.\\meu_primeiro_script.ps1': '\nIniciando limpeza do sistema...\n' + new Date().toLocaleDateString('pt-BR') + '\nTudo pronto!\n',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
