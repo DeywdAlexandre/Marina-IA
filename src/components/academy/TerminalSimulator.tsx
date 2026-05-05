@@ -277,9 +277,15 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'git reset head~1': '',
   'git reset --hard head~1': '\nHEAD is now at z9y8x7w Initial commit\n',
   'git revert a1b2c3d': '\n[master e4f5g6h] Revert "Criação da tela inicial do aplicativo"\n 1 file changed, 2 deletions(-)\n',
+  'git branch': '\n  teste-de-cores\n* master\n  nova-funcionalidade\n',
+  'git branch teste-de-cores': '',
+  'git switch master': '\nSwitched to branch \'master\'\n',
+  'git switch teste-de-cores': '\nSwitched to branch \'teste-de-cores\'\n',
+  'git merge teste-de-cores': '\nUpdating a1b2c3d..e4f5g6h\nFast-forward\n index.html | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n',
+  'git branch -d teste-de-cores': '\nDeleted branch teste-de-cores (was e4f5g6h).\n',
 };
 
-// Tentar encontrar saída para comando (case-insensitive, trim)
+// Funções para comandos dinâmicos (que aceitam argumentos variáveis)
 function getSimulatedOutput(cmd: string): string | null {
   const normalized = cmd.trim().toLowerCase().replace(/\s+/g, ' ');
   
@@ -308,6 +314,12 @@ function getSimulatedOutput(cmd: string): string | null {
     if (normalized.includes('user.name') || normalized.includes('user.email')) {
       return ''; // Silencioso em caso de sucesso
     }
+  }
+
+  if (normalized.startsWith('git checkout -b') || normalized.startsWith('git switch -c')) {
+    const parts = normalized.split(' ');
+    const branchName = parts[parts.length - 1];
+    return `\nSwitched to a new branch '${branchName}'\n`;
   }
 
   return null;
