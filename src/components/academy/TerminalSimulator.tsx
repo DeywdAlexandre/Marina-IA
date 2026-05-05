@@ -266,6 +266,11 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'git add .': '',
   'git add index.html': '',
   'git config --list': '\nuser.name=Marina Oliveira\nuser.email=marina@exemplo.com.br\ncore.repositoryformatversion=0\ncore.filemode=true\ncore.bare=false\ncore.logallrefupdates=true\n',
+  'git status': '\nOn branch master\n\nChanges to be committed:\n  (use "git restore --staged <file>..." to unstage)\n        modified:   index.html\n\nUntracked files:\n  (use "git add <file>..." to include in what will be committed)\n        style.css\n',
+  'git log': '\ncommit a1b2c3d4e5f6g7h8i9j0 (HEAD -> master)\nAuthor: Marina Oliveira <marina@exemplo.com.br>\nDate:   Mon May 5 10:00:00 2025 -0300\n\n    Criação da tela inicial do aplicativo\n\ncommit z9y8x7w6v5u4t3s2r1q0\nAuthor: Marina Oliveira <marina@exemplo.com.br>\nDate:   Sun May 4 18:30:00 2025 -0300\n\n    Initial commit\n',
+  'git log --oneline': '\na1b2c3d (HEAD -> master) Criação da tela inicial do aplicativo\nz9y8x7w Initial commit\n',
+  'git diff': '\ndiff --git a/index.html b/index.html\nindex 83db48f..f91e92c 100644\n--- a/index.html\n+++ b/index.html\n@@ -10,3 +10,4 @@\n   <body>\n-    <button>Salvar</button>\n+    <button class="primary">Salvar Perfil</button>\n+    <p>Bem-vindo ao sistema</p>\n   </body>\n',
+  'git show a1b2c3d': '\ncommit a1b2c3d4e5f6g7h8i9j0 (HEAD -> master)\nAuthor: Marina Oliveira <marina@exemplo.com.br>\nDate:   Mon May 5 10:00:00 2025 -0300\n\n    Criação da tela inicial do aplicativo\n\ndiff --git a/index.html b/index.html\nindex 83db48f..f91e92c 100644\n--- a/index.html\n+++ b/index.html\n@@ -10,3 +10,4 @@\n   <body>\n-    <button>Salvar</button>\n+    <button class="primary">Salvar Perfil</button>\n+    <p>Bem-vindo ao sistema</p>\n   </body>\n',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
