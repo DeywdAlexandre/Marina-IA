@@ -288,6 +288,10 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'git push': '\nEverything up-to-date\n',
   'git pull origin master': '\nFrom https://github.com/marina/meu-app\n * branch            master     -> FETCH_HEAD\nAlready up to date.\n',
   'git fetch origin': '\nFrom https://github.com/marina/meu-app\n   a1b2c3d..e4f5g6h  master     -> origin/master\n',
+  'git stash': '\nSaved working directory and index state WIP on master: a1b2c3d Criação da tela inicial\n',
+  'git stash pop': '\nOn branch master\nChanges not staged for commit:\n  (use "git add <file>..." to update what will be committed)\n        modified:   index.html\nDropped refs/stash@{0} (b7c8d9e)\n',
+  'git cherry-pick c4f3d2e': '\n[master f9g8h7i] fix: correção de segurança pinçada\n Date: Mon May 5 12:00:00 2025 -0300\n 1 file changed, 5 insertions(+)\n',
+  'git rebase master': '\nSuccessfully rebased and updated refs/heads/funcionalidade-nova.\n',
 };
 
 // Funções para comandos dinâmicos (que aceitam argumentos variáveis)
