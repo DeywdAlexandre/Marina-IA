@@ -7,6 +7,7 @@ import { module05 } from './module05';
 import { module06 } from './module06';
 import { module07 } from './module07';
 import { module08 } from './module08';
+import { module09 } from './module09';
 
 /**
  * Curso de Git e GitHub (Controle de Versão)
@@ -19,7 +20,7 @@ export const gitCourse: Course = {
   icon: '🐙',
   color: '#F05032', // Laranja clássico do Git
   difficulty: 'intermediate',
-  estimatedHours: 10,
+  estimatedHours: 11, // Aumentado por causa do bônus
   tags: ['Git', 'GitHub', 'Controle de Versão', 'Open Source', 'Programação'],
   modules: [
     module01,
@@ -30,5 +31,6 @@ export const gitCourse: Course = {
     module06,
     module07,
     module08,
+    module09,
   ]
 };
