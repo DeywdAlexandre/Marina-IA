@@ -4,6 +4,7 @@ import { module02 } from './module02';
 import { module03 } from './module03';
 import { module04 } from './module04';
 import { module05 } from './module05';
+import { module06 } from './module06';
 
 /**
  * Curso completo de PowerShell.
@@ -25,7 +26,7 @@ export const powershellCourse: Course = {
     module03,
     module04,
     module05,
-    // module06, — Controle de Fluxo
+    module06,
     // module07, — Funções e Scripts
     // module08, — Tratamento de Erros
     // module09, — Automação Prática
