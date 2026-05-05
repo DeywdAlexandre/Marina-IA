@@ -236,6 +236,9 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'clear-recyclebin -force -erroraction silentlycontinue': '',
   'ipconfig /flushdns': '\nWindows IP Configuration\n\nSuccessfully flushed the DNS Resolver Cache.\n',
   '[gc]::collect()': '',
+
+  // === Curso Shell Básico ===
+  'echo "hello world"': '\nHello World\n',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
