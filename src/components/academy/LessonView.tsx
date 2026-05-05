@@ -95,6 +95,14 @@ const LessonView: React.FC<LessonViewProps> = ({
   }, [sections, hasExamples, hasExercises, hasVideo, lesson.tips]);
 
   const [currentStep, setCurrentStep] = useState(0);
+
+  // --- Hack para resetar o passo IMEDIATAMENTE ao trocar de lição ---
+  // Isso evita o problema de tentar acessar um passo inexistente da lição anterior
+  const [lastLessonId, setLastLessonId] = useState(lesson.id);
+  if (lastLessonId !== lesson.id) {
+    setLastLessonId(lesson.id);
+    setCurrentStep(0);
+  }
   const [copiedBlock, setCopiedBlock] = useState<string | null>(null);
   const [showTutor, setShowTutor] = useState(false);
   const [showSimulator, setShowSimulator] = useState(false);
@@ -113,7 +121,7 @@ const LessonView: React.FC<LessonViewProps> = ({
 
   // Reseta estado quando a lição muda
   useEffect(() => {
-    setCurrentStep(0);
+    // Note: currentStep já é resetado na renderização acima
     setShowSimulator(false);
     setShowTutor(false);
     scrollRef.current?.scrollTo(0, 0);
@@ -143,6 +151,8 @@ const LessonView: React.FC<LessonViewProps> = ({
 
   // --- Render step content ---
   const renderStepContent = () => {
+    if (!step) return null; // Proteção contra undefined
+
     switch (step.type) {
       case 'tips':
         return (
@@ -383,23 +393,32 @@ const LessonView: React.FC<LessonViewProps> = ({
                 }
               </p>
             </div>
-            <div className="flex gap-3">
-              {!isCompleted && (
-                <button
-                  onClick={() => { onComplete(); }}
-                  className="px-6 py-3 bg-green-500 text-background font-bold rounded-xl hover:bg-green-400 shadow-lg shadow-green-500/20 transition-all"
-                >
-                  ✅ Marcar como Concluída
-                </button>
-              )}
-              {onNext && (
+            <div className="flex flex-col sm:flex-row gap-3">
+              {onNext ? (
                 <button
                   onClick={onNext}
-                  className="px-6 py-3 bg-primary text-background font-bold rounded-xl hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
+                  className="px-8 py-4 bg-primary text-background font-bold rounded-2xl hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-2 group"
                 >
-                  Próxima Lição <ArrowRight size={16} />
+                  {isCompleted ? 'Ir para Próxima Lição' : 'Concluir e Avançar'} 
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </button>
+              ) : (
+                !isCompleted && (
+                  <button
+                    onClick={() => { onComplete(); }}
+                    className="px-8 py-4 bg-green-500 text-background font-bold rounded-2xl hover:bg-green-400 shadow-xl shadow-green-500/20 transition-all"
+                  >
+                    ✅ Marcar como Concluída
+                  </button>
+                )
               )}
+              
+              <button
+                onClick={onBack}
+                className="px-6 py-4 bg-surface border border-border-dim text-[#9aa0a6] font-bold rounded-2xl hover:bg-[#333537] hover:text-white transition-all"
+              >
+                Voltar ao Catálogo
+              </button>
             </div>
           </motion.div>
         );

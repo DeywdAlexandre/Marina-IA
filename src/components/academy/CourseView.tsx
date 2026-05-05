@@ -29,7 +29,7 @@ interface CourseViewProps {
   activeModel: string;
 }
 
-const DEV_DISABLE_LOCKS = true; // TODO: Mudar para false em produção
+const DEV_DISABLE_LOCKS = false; // Travas de progresso ativadas
 
 const CourseView: React.FC<CourseViewProps> = ({
   course,
@@ -210,7 +210,13 @@ const CourseView: React.FC<CourseViewProps> = ({
           onSaveExercise={handleSaveExercise}
           exerciseResults={progress?.exerciseResults || {}}
           onBack={() => setActiveLessonId(null)}
-          onNext={ctx.nextLesson ? () => setActiveLessonId(ctx.nextLesson!.id) : undefined}
+          onNext={ctx.nextLesson ? () => {
+            // Se o usuário clicar em próxima, e a aula atual não estava concluída, marcamos como concluída
+            if (!isLessonCompleted(ctx.lesson.id)) {
+              handleCompleteLesson(ctx.lesson.id);
+            }
+            setActiveLessonId(ctx.nextLesson!.id);
+          } : undefined}
           onPrev={ctx.prevLesson ? () => setActiveLessonId(ctx.prevLesson!.id) : undefined}
           apiKey={apiKey}
           activeModel={activeModel}

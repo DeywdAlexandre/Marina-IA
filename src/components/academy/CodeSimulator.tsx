@@ -30,7 +30,7 @@ const CodeSimulator: React.FC<CodeSimulatorProps> = ({
   });
   
   const [activeTab, setActiveTab] = useState<TabType>('js');
-  const [output, setOutput] = useState<string[]>([]);
+  const [output, setOutput] = useState<{type: 'LOG' | 'ERROR' | 'WARN' | 'INFO', content: string}[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [copied, setCopied] = useState(false);
   
@@ -44,7 +44,7 @@ const CodeSimulator: React.FC<CodeSimulatorProps> = ({
     }
   }, [output]);
 
-  const runCode = () => {
+  const runCode = (switchToPreview = true) => {
     setIsRunning(true);
     setOutput([]); // Limpa o console
 
@@ -58,35 +58,53 @@ const CodeSimulator: React.FC<CodeSimulatorProps> = ({
         <body>
           ${files.html}
           <script>
-            // Captura de logs para o console da Marina
-            const originalLog = console.log;
-            console.log = (...args) => {
-              window.parent.postMessage({ 
-                type: 'LOG', 
-                content: args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ') 
-              }, '*');
-              originalLog(...args);
-            };
-            window.onerror = (msg) => {
-              window.parent.postMessage({ type: 'ERROR', content: msg }, '*');
-            };
+            (function() {
+              const captureLog = (type, args) => {
+                try {
+                  const content = args.map(arg => {
+                    if (typeof arg === 'object' && arg !== null) {
+                      try { return JSON.stringify(arg, null, 2); } catch (e) { return '[Object]'; }
+                    }
+                    return String(arg);
+                  }).join(' ');
 
-            try {
-              ${files.js}
-            } catch (err) {
-              window.parent.postMessage({ type: 'ERROR', content: err.message }, '*');
-            }
+                  window.parent.postMessage({ 
+                    source: 'marina-sandbox',
+                    type, 
+                    content 
+                  }, '*');
+                } catch (e) {}
+              };
+
+              const originalLog = console.log;
+              const originalError = console.error;
+              const originalWarn = console.warn;
+              const originalInfo = console.info;
+
+              console.log = (...args) => { captureLog('LOG', args); originalLog(...args); };
+              console.error = (...args) => { captureLog('ERROR', args); originalError(...args); };
+              console.warn = (...args) => { captureLog('WARN', args); originalWarn(...args); };
+              console.info = (...args) => { captureLog('INFO', args); originalInfo(...args); };
+
+              window.onerror = (msg, url, line, col, error) => {
+                captureLog('ERROR', [msg + ' (Linha: ' + line + ')']);
+              };
+
+              try {
+                ${files.js}
+              } catch (err) {
+                captureLog('ERROR', [err.message]);
+              }
+            })();
           </script>
         </body>
       </html>
     `;
     
-    // Muda para a aba de preview se já não estiver nela
-    if (activeTab !== 'preview') {
+    if (switchToPreview && activeTab !== 'preview') {
       setActiveTab('preview');
     }
 
-    // Aguarda montagem do iframe se necessário
     setTimeout(() => {
       if (iframeRef.current) {
         iframeRef.current.srcdoc = fullHtml;
@@ -97,19 +115,30 @@ const CodeSimulator: React.FC<CodeSimulatorProps> = ({
     if (onExecute) onExecute(files, []);
   };
 
-  // Escuta mensagens do iframe (logs e erros)
+  // Escuta mensagens do iframe e atalhos de teclado
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'LOG') {
-        setOutput(prev => [...prev, event.data.content]);
-      } else if (event.data.type === 'ERROR') {
-        setOutput(prev => [...prev, `❌ Erro: ${event.data.content}`]);
+      if (event.data?.source !== 'marina-sandbox') return;
+      const { type, content } = event.data;
+      if (['LOG', 'ERROR', 'WARN', 'INFO'].includes(type)) {
+        setOutput(prev => [...prev, { type, content }]);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        runCode();
       }
     };
 
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [files, activeTab]); // Dependências necessárias para runCode acessar os estados atuais
 
   const resetCode = () => {
     setFiles({ html: initialHtml, js: initialJs, css: initialCss });
@@ -252,9 +281,14 @@ const CodeSimulator: React.FC<CodeSimulatorProps> = ({
               <span className="text-[#333] italic">Logs do sistema aparecerão aqui ao clicar em Executar.</span>
             ) : (
               output.map((line, i) => (
-                <div key={i} className="text-[#d4d4d4] whitespace-pre-wrap flex gap-2">
-                  <span className="text-green-600 shrink-0">➜</span>
-                  <span>{line}</span>
+                <div key={i} className={`whitespace-pre-wrap flex gap-2 ${
+                  line.type === 'ERROR' ? 'text-red-400' :
+                  line.type === 'WARN' ? 'text-yellow-400' :
+                  line.type === 'INFO' ? 'text-blue-400' :
+                  'text-[#d4d4d4]'
+                }`}>
+                  <span className={`${line.type === 'ERROR' ? 'text-red-500' : 'text-green-600'} shrink-0`}>➜</span>
+                  <span>{line.type === 'LOG' ? line.content : `${line.type === 'ERROR' ? '❌ ' : line.type === 'WARN' ? '⚠️ ' : 'ℹ️ '}${line.content}`}</span>
                 </div>
               ))
             )}
@@ -279,8 +313,18 @@ const CodeSimulator: React.FC<CodeSimulatorProps> = ({
             <RotateCcw size={12} />
             Reiniciar
           </button>
+          
           <button
-            onClick={runCode}
+            onClick={() => runCode(false)}
+            disabled={isRunning}
+            className="flex items-center gap-1.5 px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-xs font-medium transition-colors border border-white/10"
+          >
+            <Terminal size={12} className="text-green-400" />
+            Executar no Console
+          </button>
+
+          <button
+            onClick={() => runCode(true)}
             disabled={isRunning}
             className="flex items-center gap-1.5 px-4 py-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded text-xs font-bold transition-all shadow-lg active:scale-95"
           >
