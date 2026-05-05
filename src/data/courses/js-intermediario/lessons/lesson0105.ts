@@ -5,6 +5,14 @@ export const lesson0105: Lesson = {
   title: 'Navegando pela Árvore (Parent & Children)',
   type: 'mixed',
   estimatedMinutes: 12,
+  previewHtml: `
+    <div id="container" style="padding: 20px; border: 2px solid #333;">
+      <div id="card-usuario" style="padding: 15px; background: #3178C6; color: white; border-radius: 8px;">
+        <h3 id="nome-usuario">Marina Oliveira</h3>
+        <button id="btn-remover" style="background: white; color: red; border: none; padding: 5px 10px; cursor: pointer;">Remover Card</button>
+      </div>
+    </div>
+  `,
   tips: [
     'O "parentElement" leva você para o pai do elemento atual.',
     'O "children" retorna uma lista de todos os filhos.',

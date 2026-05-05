@@ -5,6 +5,15 @@ export const lesson0101: Lesson = {
   title: 'O que é o DOM? (A Árvore da Vida Web)',
   type: 'mixed',
   estimatedMinutes: 12,
+  previewHtml: `
+    <div id="root" style="padding: 20px; text-align: center;">
+      <h1 id="titulo">Bem-vindo à Marina Academy</h1>
+      <p id="subtitulo">Esta é uma página real renderizada dentro do seu simulador.</p>
+      <div style="margin-top: 20px; padding: 15px; border: 2px dashed #ccc; border-radius: 8px;">
+        Este é um container de teste. Use o JS para me mudar!
+      </div>
+    </div>
+  `,
   tips: [
     'DOM significa Document Object Model.',
     'É a representação do seu HTML como um objeto que o JavaScript pode entender.',

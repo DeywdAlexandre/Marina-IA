@@ -5,6 +5,22 @@ export const lesson0204: Lesson = {
   title: 'Formulários: Capturando e Travando Envios',
   type: 'mixed',
   estimatedMinutes: 20,
+  previewHtml: `
+    <div style="padding: 20px; background: #f4f7f6; border-radius: 10px;">
+      <h2 style="color: #3178C6; margin-top: 0;">Nova Transação</h2>
+      <form id="finance-form">
+        <div style="margin-bottom: 12px;">
+          <input type="text" id="desc" placeholder="Ex: Aluguel" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 12px;">
+          <input type="number" id="valor" placeholder="Ex: 1200" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <button type="submit" style="width: 100%; padding: 12px; background: #3178C6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+          Adicionar
+        </button>
+      </form>
+    </div>
+  `,
   tips: [
     'O evento "submit" é disparado no FORMULÁRIO, não no botão.',
     'Use event.preventDefault() para impedir que a página recarregue.',

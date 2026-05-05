@@ -5,6 +5,15 @@ export const lesson0201: Lesson = {
   title: 'Escutadores de Eventos (Ouvindo o Usuário)',
   type: 'mixed',
   estimatedMinutes: 12,
+  previewHtml: `
+    <div style="padding: 20px; text-align: center;">
+      <h1>Ouvinte de Eventos</h1>
+      <button id="meu-btn" style="padding: 15px 30px; font-size: 16px; background: #3178C6; color: white; border: none; border-radius: 8px; cursor: pointer;">
+        Clique em Mim!
+      </button>
+      <p id="msg" style="margin-top: 15px; font-weight: bold;"></p>
+    </div>
+  `,
   tips: [
     'Um evento é qualquer coisa que acontece na página (clique, movimento, tecla).',
     'Usamos o método addEventListener para dizer ao elemento o que ele deve "ouvir".',

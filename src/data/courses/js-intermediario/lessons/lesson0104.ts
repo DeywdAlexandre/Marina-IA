@@ -5,6 +5,14 @@ export const lesson0104: Lesson = {
   title: 'Criando Elementos do Zero (createElement)',
   type: 'mixed',
   estimatedMinutes: 15,
+  previewHtml: `
+    <div style="padding: 20px;">
+      <h1>Lista de Compras Dinâmica</h1>
+      <ul id="lista-compras" style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+        <!-- Os itens serão criados pelo JavaScript -->
+      </ul>
+    </div>
+  `,
   tips: [
     'createElement cria o elemento na memória, mas não o coloca na página ainda.',
     'appendChild é o comando que "pendura" o novo elemento dentro de outro.',

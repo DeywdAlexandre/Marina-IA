@@ -5,6 +5,16 @@ export const lesson0102: Lesson = {
   title: 'Seletores: Encontrando Agulhas no Palheiro',
   type: 'mixed',
   estimatedMinutes: 15,
+  previewHtml: `
+    <div style="padding: 20px;">
+      <h1 id="main-title">Explorador de Seletores</h1>
+      <p class="desc">Eu sou um parágrafo com uma classe.</p>
+      <p class="desc">Eu também tenho a mesma classe!</p>
+      <button id="btn-teste" style="padding: 10px; background: #3178C6; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Eu sou um botão com ID
+      </button>
+    </div>
+  `,
   tips: [
     'Use o "id" para seletores únicos.',
     'Use "class" para seletores de múltiplos elementos.',

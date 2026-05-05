@@ -5,6 +5,13 @@ export const lesson0203: Lesson = {
   title: 'Eventos de Teclado (Input e Atallhos)',
   type: 'mixed',
   estimatedMinutes: 15,
+  previewHtml: `
+    <div style="padding: 20px;">
+      <label style="display: block; margin-bottom: 8px; font-weight: bold;">O que você está pensando?</label>
+      <input type="text" id="meu-input" placeholder="Digite algo..." style="width: 100%; padding: 12px; border: 2px solid #3178C6; border-radius: 6px; outline: none;">
+      <p style="margin-top: 10px; color: #666;">Preview em tempo real: <span id="espelho" style="color: #3178C6; font-weight: bold;"></span></p>
+    </div>
+  `,
   tips: [
     '"keydown" dispara assim que você aperta a tecla.',
     '"keyup" dispara quando você solta a tecla.',

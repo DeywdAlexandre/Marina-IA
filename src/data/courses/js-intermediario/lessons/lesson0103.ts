@@ -5,6 +5,13 @@ export const lesson0103: Lesson = {
   title: 'Modificando Conteúdo e Estilos (O Poder do JS)',
   type: 'mixed',
   estimatedMinutes: 15,
+  previewHtml: `
+    <div id="app" style="padding: 30px; text-align: center; transition: all 0.3s;">
+      <h1 id="display">Aguardando Mudança...</h1>
+      <p>Use o código para mudar minha cor, tamanho e texto!</p>
+      <div id="caixa" style="width: 100px; height: 100px; background: #eee; margin: 20px auto; border-radius: 10px;"></div>
+    </div>
+  `,
   tips: [
     'Use innerText para mudar apenas o texto.',
     'Use innerHTML se precisar incluir tags HTML dentro da mudança.',

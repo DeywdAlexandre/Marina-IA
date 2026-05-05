@@ -5,6 +5,22 @@ export const lesson0205: Lesson = {
   title: 'Delegação de Eventos (Truque de Mestre)',
   type: 'mixed',
   estimatedMinutes: 15,
+  previewHtml: `
+    <div style="padding: 20px;">
+      <h2 style="margin-bottom: 15px;">Lista de Presença</h2>
+      <ul id="lista-presenca" style="list-style: none; padding: 0;">
+        <li style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <span>João Silva</span>
+          <button class="btn-delete" style="background: #ff5f56; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Excluir</button>
+        </li>
+        <li style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+          <span>Maria Santos</span>
+          <button class="btn-delete" style="background: #ff5f56; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Excluir</button>
+        </li>
+      </ul>
+      <p style="font-size: 11px; color: #888; margin-top: 10px;">Clique em "Excluir" para testar a delegação de eventos no pai (ul).</p>
+    </div>
+  `,
   tips: [
     'Em vez de colocar um evento em 100 botões, coloque 1 evento no pai deles.',
     'Isso economiza memória e funciona até para elementos criados depois.',

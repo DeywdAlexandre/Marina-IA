@@ -5,6 +5,14 @@ export const lesson0202: Lesson = {
   title: 'Eventos de Mouse (Click, Hover e Além)',
   type: 'mixed',
   estimatedMinutes: 15,
+  previewHtml: `
+    <div style="padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+      <div id="box" style="width: 150px; height: 150px; background: #3178C6; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; cursor: crosshair;">
+        Passe o Mouse
+      </div>
+      <p id="coordenadas" style="font-family: monospace; background: #eee; padding: 5px; border-radius: 4px;">X: 0, Y: 0</p>
+    </div>
+  `,
   tips: [
     '"click" é o mais comum, mas "dblclick" (clique duplo) também existe.',
     '"mouseenter" e "mouseleave" são perfeitos para criar efeitos de hover personalizados.',
