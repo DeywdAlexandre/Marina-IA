@@ -1,6 +1,7 @@
 import { Course } from '../../../types/academy';
 import { module01 } from './module01';
 import { module02 } from './module02';
+import { module03 } from './module03';
 
 /**
  * Curso Básico de Shell (Navegação Unix/Bash)
@@ -19,6 +20,6 @@ export const shellBasicoCourse: Course = {
   modules: [
     module01,
     module02,
-    // module03, — Manipulação de Arquivos (mkdir, touch, cp, mv, rm)
+    module03,
   ]
 };

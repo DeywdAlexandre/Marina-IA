@@ -247,6 +247,19 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'cd downloads': '',
   'cd ..': '',
   'cd ~': '',
+  'mkdir projetos': '',
+  'mkdir fotos musicas documentos': '',
+  'mkdir "minhas fotos"': '',
+  'touch relatorio.txt': '',
+  'touch index.html style.css script.js': '',
+  'cp foto.jpg projetos/': '',
+  'cp arquivo_velho.txt arquivo_novo.txt': '',
+  'mv relatorio.pdf documentos/': '',
+  'mv foto.jpg perfil.jpg': '',
+  'rm relatorio.pdf': '',
+  'rm foto1.jpg foto2.jpg foto3.jpg': '',
+  'rm -r minhasfotos': '',
+  'rm -rf /': '\nrm: it is dangerous to operate recursively on '/'\nrm: use --no-preserve-root to override this failsafe\n',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
