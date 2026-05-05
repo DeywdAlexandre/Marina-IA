@@ -600,7 +600,8 @@ const LessonView: React.FC<LessonViewProps> = ({
                   ) : (
                     <div className="h-full">
                       <CodeSimulator 
-                        initialCode={lesson.content.codeExamples?.[0]?.code || '// Teste o conteúdo da aula aqui...\n'} 
+                        initialJs={lesson.content.codeExamples?.[0]?.code || '// Teste o conteúdo da aula aqui...\n'} 
+                        initialHtml={lesson.previewHtml}
                       />
                     </div>
                   )}
