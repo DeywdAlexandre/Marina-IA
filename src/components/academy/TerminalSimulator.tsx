@@ -228,6 +228,14 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   // === Módulo 10: Projeto Final ===
   'get-ciminstance win32_logicaldisk | where-object { $_.deviceid -eq "c:" }': '\nDeviceID DriveType ProviderName VolumeName Size          FreeSpace\n-------- --------- ------------ ---------- ----          ---------\nC:       3                      OS         511311654912  102832918528\n',
   'compress-archive -path "c:\\users\\aluno\\documents\\projetos\\*" -destinationpath "c:\\backups\\backup.zip" -update -erroraction stop': '',
+
+  // === Módulo Bônus: Limpeza e Otimização ===
+  'get-process | sort-object -property pm -descending | select-object -first 5': '\nHandles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName\n-------  ------    -----      -----     ------     --  -- -----------\n   2453     123  1542312    1234567     123.45  12345   1 chrome\n   1234      56   987654     876543      45.67   5432   1 msedge\n    876      45   654321     543210      12.34   9876   1 Code\n    543      34   321098     210987       5.67   3456   1 Teams\n    321      23   109876      98765       1.23   7890   1 explorer\n',
+  'get-process | sort-object pm -descending | select-object -first 5': '\nHandles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName\n-------  ------    -----      -----     ------     --  -- -----------\n   2453     123  1542312    1234567     123.45  12345   1 chrome\n   1234      56   987654     876543      45.67   5432   1 msedge\n    876      45   654321     543210      12.34   9876   1 Code\n    543      34   321098     210987       5.67   3456   1 Teams\n    321      23   109876      98765       1.23   7890   1 explorer\n',
+  'stop-process -name "chrome" -force': '',
+  'clear-recyclebin -force -erroraction silentlycontinue': '',
+  'ipconfig /flushdns': '\nWindows IP Configuration\n\nSuccessfully flushed the DNS Resolver Cache.\n',
+  '[gc]::collect()': '',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)

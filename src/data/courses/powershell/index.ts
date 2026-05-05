@@ -9,6 +9,7 @@ import { module07 } from './module07';
 import { module08 } from './module08';
 import { module09 } from './module09';
 import { module10 } from './module10';
+import { moduleBonus } from './moduleBonus';
 
 /**
  * Curso completo de PowerShell.
@@ -35,6 +36,6 @@ export const powershellCourse: Course = {
     module08,
     module09,
     module10,
-    // moduleBONUS — Limpeza e Otimização do PC
+    moduleBonus
   ]
 };
