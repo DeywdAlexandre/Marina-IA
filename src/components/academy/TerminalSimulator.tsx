@@ -211,6 +211,12 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'somar-numeros -a 10 -b 5': '\n15\n',
   'set-executionpolicy remotesigned': '',
   '.\\meu_primeiro_script.ps1': '\nIniciando limpeza do sistema...\n' + new Date().toLocaleDateString('pt-BR') + '\nTudo pronto!\n',
+
+  // === Módulo 8: Tratamento de Erros ===
+  'get-content "c:\\caminho\\invalido\\senha.txt" -erroraction stop': '\nGet-Content : Cannot find path \'C:\\Caminho\\Invalido\\Senha.txt\' because it does not exist.\nAt line:1 char:1\n+ Get-Content "C:\\Caminho\\Invalido\\Senha.txt" -ErrorAction Stop\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    + CategoryInfo          : ObjectNotFound: (C:\\Caminho\\Invalido\\Senha.txt:String) [Get-Content], ItemNotFoundException\n    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand\n',
+  'get-childitem c:\\windows -recurse -erroraction silentlycontinue': '', // Simulando output limpo (vazio aqui por simplicidade)
+  'remove-item *.tmp -whatif': '\nWhat if: Performing the operation "Remove File" on target "C:\\Users\\Aluno\\arquivo_lixo.tmp".\n',
+  'remove-item *.tmp -confirm': '\nConfirm\nAre you sure you want to perform this action?\nPerforming the operation "Remove File" on target "C:\\Users\\Aluno\\arquivo_lixo.tmp".\n[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "Y"):\n',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
