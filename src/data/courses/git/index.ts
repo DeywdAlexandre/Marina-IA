@@ -1,6 +1,7 @@
 import { Course } from '../../../types/academy';
 import { module01 } from './module01';
 import { module02 } from './module02';
+import { module03 } from './module03';
 
 /**
  * Curso de Git e GitHub (Controle de Versão)
@@ -18,7 +19,7 @@ export const gitCourse: Course = {
   modules: [
     module01,
     module02,
-    // module03,
+    module03,
     // module04,
     // module05,
     // module06,

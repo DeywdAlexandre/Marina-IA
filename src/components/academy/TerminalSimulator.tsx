@@ -271,6 +271,12 @@ Get-Process                       Cmdlet    Microsoft.PowerShell.M... Gets the p
   'git log --oneline': '\na1b2c3d (HEAD -> master) Criação da tela inicial do aplicativo\nz9y8x7w Initial commit\n',
   'git diff': '\ndiff --git a/index.html b/index.html\nindex 83db48f..f91e92c 100644\n--- a/index.html\n+++ b/index.html\n@@ -10,3 +10,4 @@\n   <body>\n-    <button>Salvar</button>\n+    <button class="primary">Salvar Perfil</button>\n+    <p>Bem-vindo ao sistema</p>\n   </body>\n',
   'git show a1b2c3d': '\ncommit a1b2c3d4e5f6g7h8i9j0 (HEAD -> master)\nAuthor: Marina Oliveira <marina@exemplo.com.br>\nDate:   Mon May 5 10:00:00 2025 -0300\n\n    Criação da tela inicial do aplicativo\n\ndiff --git a/index.html b/index.html\nindex 83db48f..f91e92c 100644\n--- a/index.html\n+++ b/index.html\n@@ -10,3 +10,4 @@\n   <body>\n-    <button>Salvar</button>\n+    <button class="primary">Salvar Perfil</button>\n+    <p>Bem-vindo ao sistema</p>\n   </body>\n',
+  'git restore index.html': '',
+  'git restore --staged index.html': '',
+  'git reset --soft head~1': '',
+  'git reset head~1': '',
+  'git reset --hard head~1': '\nHEAD is now at z9y8x7w Initial commit\n',
+  'git revert a1b2c3d': '\n[master e4f5g6h] Revert "Criação da tela inicial do aplicativo"\n 1 file changed, 2 deletions(-)\n',
 };
 
 // Tentar encontrar saída para comando (case-insensitive, trim)
